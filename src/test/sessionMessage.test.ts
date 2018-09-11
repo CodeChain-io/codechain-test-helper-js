@@ -2,7 +2,7 @@ import * as sessionMessage from "../sessionMessage";
 import { H128 } from "codechain-sdk/lib/core/H128";
 import { H512 } from "codechain-sdk/lib/core/H512";
 
-describe("Check RLP encoding", () => {
+describe("Check Session Message RLP encoding", () => {
     test(
         "NodeIdRequest RLP encoding test",
         () => {

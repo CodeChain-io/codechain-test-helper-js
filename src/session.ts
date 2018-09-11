@@ -16,6 +16,7 @@
 
 import { H128 } from "codechain-sdk/lib/core/H128";
 import { H512 } from "codechain-sdk/lib/core/H512";
+import { H256 } from "codechain-sdk/lib/core/H256";
 import {
     MessageType,
     SessionMessage,
@@ -46,6 +47,7 @@ export class Session {
     private socket: any;
     private key: null | any;
     private nonce: H128;
+    private secret: null | H256;
     private encodedSecret: null | Buffer;
     private targetNonce: null | H128;
     private targetPubkey: null | H512;
@@ -55,6 +57,7 @@ export class Session {
         this.targetPort = port;
         this.key = null;
         this.nonce = new H128("0x000000000000000000000000DEADBEEF");
+        this.secret = null;
         this.targetNonce = null;
         this.targetPubkey = null;
         this.encodedSecret = null;
@@ -171,15 +174,20 @@ export class Session {
                                     "hex"
                                 )
                                 .getPublic();
-                            const sharedSecret = this.key.derive(pubKey);
+                            this.secret = new H256(
+                                this.key.derive(pubKey).toString(16)
+                            );
                             const encodedNonce = this.nonce.rlpBytes();
 
                             const iv = new Buffer(
                                 "00000000000000000000000000000000",
                                 "hex"
                             );
+                            if (this.secret === null) {
+                                throw Error("Failed to get shared secret");
+                            }
                             const key = new Buffer(
-                                sharedSecret.toString(16),
+                                this.secret.toEncodeObject().slice(2),
                                 "hex"
                             );
                             const encryptor = CRYPTO.createCipheriv(
@@ -311,15 +319,18 @@ export class Session {
                                     "hex"
                                 )
                                 .getPublic();
-                            const sharedSecret = this.key.derive(pubKey);
+                            this.secret = this.key.derive(pubKey);
                             const encodedNonce = this.nonce.rlpBytes();
 
                             const iv = new Buffer(
                                 "00000000000000000000000000000000",
                                 "hex"
                             );
+                            if (this.secret === null) {
+                                throw Error("Failed to get shared secret");
+                            }
                             const key = new Buffer(
-                                sharedSecret.toString(16),
+                                this.secret.toEncodeObject().slice(2),
                                 "hex"
                             );
                             const encryptor = CRYPTO.createCipheriv(

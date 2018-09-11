@@ -7,7 +7,8 @@
     "start": "jest -i",
     "build": "tsc -p .",
     "test": "npm run lint",
-    "lint": "tsfmt --verify"
+    "lint": "tslint -p . && prettier 'src/**/*.{ts,js,json}' -l",
+    "fmt": "tslint -p . --fix && prettier 'src/**/*.{ts,js,json}' --write"
   },
   "author": "CodeChain Team <codechain@kodebox.io>",
   "dependencies": {

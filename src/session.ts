@@ -35,6 +35,7 @@ const CRYPTO = require("crypto");
 const ALGORITHM = "AES-256-CBC";
 const DGRAM = require("dgram");
 const EC = require("elliptic").ec;
+const RLP = require("rlp");
 
 const MAX_PACKET_SIZE = 1024;
 const PORT = 6602;
@@ -217,7 +218,29 @@ export class Session {
                                     rinfo.address
                                 }:${rinfo.port}`
                             );
-                            this.targetNonce = sessionMsg.getBody().getItem();
+
+                            const iv = new Buffer(
+                                this.nonce.toEncodeObject().slice(2),
+                                "hex"
+                            );
+                            if (this.secret === null) {
+                                throw Error("Failed to get shared secret");
+                            }
+                            const key = new Buffer(
+                                this.secret.toEncodeObject().slice(2),
+                                "hex"
+                            );
+                            const decryptor = CRYPTO.createDecipheriv(
+                                ALGORITHM,
+                                key,
+                                iv
+                            );
+                            decryptor.write(sessionMsg.getBody().getItem());
+                            decryptor.end();
+                            this.targetNonce = new H128(
+                                RLP.decode(decryptor.read()).toString("hex")
+                            );
+
                             this.socket.close();
                             break;
                         }
@@ -319,10 +342,8 @@ export class Session {
                                     "hex"
                                 )
                                 .getPublic();
-                            this.secret = this.key.derive(pubKey);
-                            const encodedNonce = this.nonce.rlpBytes();
-
-                            const iv = new Buffer(
+                            this.secret = new H256(this.key.derive(pubKey));
+                            const ivd = new Buffer(
                                 "00000000000000000000000000000000",
                                 "hex"
                             );
@@ -333,10 +354,26 @@ export class Session {
                                 this.secret.toEncodeObject().slice(2),
                                 "hex"
                             );
+                            const decryptor = CRYPTO.createDecipheriv(
+                                ALGORITHM,
+                                key,
+                                ivd
+                            );
+                            decryptor.write(sessionMsg.getBody().getItem());
+                            decryptor.end();
+                            this.targetNonce = new H128(
+                                RLP.decode(decryptor.read()).toString("hex")
+                            );
+
+                            const encodedNonce = this.nonce.rlpBytes();
+                            const ive = new Buffer(
+                                this.targetNonce.toEncodeObject().slice(2),
+                                "hex"
+                            );
                             const encryptor = CRYPTO.createCipheriv(
                                 ALGORITHM,
                                 key,
-                                iv
+                                ive
                             );
 
                             encryptor.write(encodedNonce);

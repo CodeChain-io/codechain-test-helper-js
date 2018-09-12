@@ -16,9 +16,9 @@
 import { NodeId } from "./sessionMessage";
 import { H256 } from "codechain-sdk/lib/core/H256";
 import { H128 } from "codechain-sdk/lib/core/H128";
+import { blake256WithKey } from "codechain-sdk/lib/utils";
 
 const RLP = require("rlp");
-const BLAKE = require("blakejs");
 
 export enum MessageType {
     SYNC_ID = 0x00,
@@ -319,9 +319,13 @@ export class SignedMessage {
 
     constructor(message: Message, nonce: H128) {
         this.message = message.rlpBytes();
-        this.signature = BLAKE.blake2b(
-            this.message,
-            new Buffer(nonce.toEncodeObject().slice(2), "hex")
+        this.signature = new H256(
+            blake256WithKey(
+                this.message,
+                new Uint8Array([
+                    ...new Buffer(nonce.toEncodeObject().slice(2), "hex")
+                ])
+            )
         );
     }
 

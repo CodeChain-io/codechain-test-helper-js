@@ -14,8 +14,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { NodeId } from "./sessionMessage";
+import { H256 } from "codechain-sdk/lib/core/H256";
+import { H128 } from "codechain-sdk/lib/core/H128";
 
 const RLP = require("rlp");
+const BLAKE = require("blakejs");
 
 export enum MessageType {
     SYNC_ID = 0x00,
@@ -306,4 +309,36 @@ interface IEncryptedData {
 interface IUnencryptedData {
     type: "unencrypted";
     data: Buffer;
+}
+
+type Message = HandshakeMessage | NegotiationMessage | ExtensionMessage;
+
+export class SignedMessage {
+    private message: Buffer;
+    private signature: H256;
+
+    constructor(message: Message, nonce: H128) {
+        this.message = message.rlpBytes();
+        this.signature = BLAKE.blake2b(
+            this.message,
+            new Buffer(nonce.toEncodeObject().slice(2), "hex")
+        );
+    }
+
+    toEncodeObject(): Array<any> {
+        return [
+            `0x${this.message.toString("hex")}`,
+            this.signature.toEncodeObject()
+        ];
+    }
+
+    rlpBytes(): Buffer {
+        return RLP.encode(this.toEncodeObject());
+    }
+
+    fromBytes(bytes: Buffer) {
+        const decodedbytes = RLP.decode(bytes);
+        this.message = decodedbytes[0];
+        this.signature = decodedbytes[1];
+    }
 }

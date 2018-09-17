@@ -1,5 +1,6 @@
 import * as p2pMessage from "../p2pMessage";
 import * as sessionMessage from "../sessionMessage";
+import { H128 } from "codechain-sdk/lib/core/H128";
 
 describe("Check P2P Message RLP encoding", () => {
     test(
@@ -203,6 +204,68 @@ describe("Check P2P Message RLP encoding", () => {
             116,
             101,
             100
+        ]);
+    });
+
+    test("SignedMessage RLP encoding test", () => {
+        const port = 1234;
+        const nodeid = new sessionMessage.NodeId("127.0.0.1", 8080);
+        const body = new p2pMessage.SyncMessage(0, port, nodeid);
+        const msg = new p2pMessage.HandshakeMessage(body);
+        const signedmsg = new p2pMessage.SignedMessage(
+            msg,
+            new H128("00000000000000000000000000000000")
+        );
+        expect([...signedmsg.rlpBytes()]).toEqual([
+            240,
+            142,
+            205,
+            128,
+            128,
+            130,
+            4,
+            210,
+            199,
+            127,
+            128,
+            128,
+            1,
+            130,
+            31,
+            144,
+            160,
+            175,
+            189,
+            253,
+            75,
+            254,
+            164,
+            207,
+            23,
+            42,
+            187,
+            234,
+            244,
+            45,
+            212,
+            131,
+            50,
+            11,
+            132,
+            161,
+            87,
+            90,
+            126,
+            203,
+            191,
+            83,
+            115,
+            223,
+            38,
+            254,
+            181,
+            147,
+            181
         ]);
     });
 });

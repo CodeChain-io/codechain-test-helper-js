@@ -38,7 +38,7 @@ const EC = require("elliptic").ec;
 const RLP = require("rlp");
 
 const MAX_PACKET_SIZE = 1024;
-const PORT = 6602;
+export const PORT = 6602;
 
 const ec = new EC("secp256k1");
 
@@ -112,21 +112,21 @@ export class Session {
         return this.targetPubkey;
     }
 
-    connect(): void {
-        try {
+    async connect(): Promise<{}> {
+        return new Promise((resolve, reject) => {
             console.log("Start connecting");
-            this.socket = DGRAM.createSocket("udp4");
+            try {
+                this.socket = DGRAM.createSocket("udp4");
 
-            this.socket.on("error", (err: any) => {
-                console.log(`server error:\n${err.stack}`);
-                this.socket.close();
-            });
+                this.socket.on("error", (err: any) => {
+                    console.log(`server error:\n${err.stack}`);
+                    this.socket.close();
+                    reject(err);
+                });
 
-            this.socket.on("listening", () => {
-                try {
+                this.socket.on("listening", () => {
                     this.socket.setRecvBufferSize(MAX_PACKET_SIZE);
                     this.socket.setSendBufferSize(MAX_PACKET_SIZE);
-                    this.sendSessionMessage(MessageType.NODE_ID_REQUEST);
                     const address = this.socket.address();
                     console.log(
                         "UDP Server listening on " +
@@ -134,272 +134,275 @@ export class Session {
                             ":" +
                             address.port
                     );
-                } catch (err) {
-                    console.error(err);
-                }
-            });
-
-            this.socket.on("message", (msg: any, rinfo: any) => {
-                try {
-                    const sessionMsg = SessionMessage.fromBytes(msg);
-                    switch (sessionMsg.getBody().protocolId()) {
-                        case MessageType.NODE_ID_RESPONSE: {
-                            console.log(
-                                `Received: NODE_ID_RESPONSE from ${
-                                    rinfo.address
-                                }:${rinfo.port}`
-                            );
-                            this.key = ec.genKeyPair();
-                            this.sendSessionMessage(MessageType.SECRET_REQUEST);
-
-                            break;
-                        }
-
-                        case MessageType.SECRET_ALLOWED: {
-                            console.log(
-                                `Received: SECRET_ALLOWED from ${
-                                    rinfo.address
-                                }:${rinfo.port}`
-                            );
-                            this.targetPubkey = sessionMsg.getBody().getItem();
-                            if (this.targetPubkey === null) {
-                                throw Error("The key is not defined");
-                            }
-                            const pubKey = ec
-                                .keyFromPublic(
-                                    "04".concat(
-                                        this.targetPubkey
-                                            .toEncodeObject()
-                                            .slice(2)
-                                    ),
-                                    "hex"
-                                )
-                                .getPublic();
-                            this.secret = new H256(
-                                this.key.derive(pubKey).toString(16)
-                            );
-                            const encodedNonce = this.nonce.rlpBytes();
-
-                            const iv = new Buffer(
-                                "00000000000000000000000000000000",
-                                "hex"
-                            );
-                            if (this.secret === null) {
-                                throw Error("Failed to get shared secret");
-                            }
-                            const key = new Buffer(
-                                this.secret.toEncodeObject().slice(2),
-                                "hex"
-                            );
-                            const encryptor = CRYPTO.createCipheriv(
-                                ALGORITHM,
-                                key,
-                                iv
-                            );
-
-                            encryptor.write(encodedNonce);
-                            encryptor.end();
-                            this.encodedSecret = new Buffer(encryptor.read());
-                            this.sendSessionMessage(MessageType.NONCE_REQUEST);
-                            break;
-                        }
-                        case MessageType.SECRET_DENIED: {
-                            console.log(
-                                `Received: SECRET_DENIED from ${
-                                    rinfo.address
-                                }:${rinfo.port}`
-                            );
-                            throw Error(sessionMsg.getBody().getItem());
-                        }
-
-                        case MessageType.NONCE_ALLOWED: {
-                            console.log(
-                                `Received: NONCE_ALLOWED from ${
-                                    rinfo.address
-                                }:${rinfo.port}`
-                            );
-
-                            const iv = new Buffer(
-                                this.nonce.toEncodeObject().slice(2),
-                                "hex"
-                            );
-                            if (this.secret === null) {
-                                throw Error("Failed to get shared secret");
-                            }
-                            const key = new Buffer(
-                                this.secret.toEncodeObject().slice(2),
-                                "hex"
-                            );
-                            const decryptor = CRYPTO.createDecipheriv(
-                                ALGORITHM,
-                                key,
-                                iv
-                            );
-                            decryptor.write(sessionMsg.getBody().getItem());
-                            decryptor.end();
-                            this.targetNonce = new H128(
-                                RLP.decode(decryptor.read()).toString("hex")
-                            );
-
-                            this.socket.close();
-                            break;
-                        }
-                        case MessageType.NONCE_DENIED: {
-                            console.log(
-                                `Received: NONCE_DENIED from ${rinfo.address}:${
-                                    rinfo.port
-                                }`
-                            );
-                            throw Error(sessionMsg.getBody().getItem());
-                        }
-
-                        default: {
-                            throw Error(
-                                "Got invalid session message while connecting"
-                            );
-                        }
+                    try {
+                        this.sendSessionMessage(MessageType.NODE_ID_REQUEST);
+                    } catch (err) {
+                        console.error(err);
+                        reject(err);
                     }
-                } catch (err) {
-                    console.error(err);
-                }
-            });
+                });
 
-            this.socket.bind(PORT);
+                this.socket.on("message", (msg: any, rinfo: any) => {
+                    if (this.onConnectionMessage(msg, rinfo)) {
+                        resolve();
+                    }
+                });
+
+                this.socket.bind(PORT);
+            } catch (err) {
+                console.error(err);
+                reject(err);
+            }
+        });
+    }
+
+    async listen(): Promise<{}> {
+        return new Promise((resolve, reject) => {
+            console.log("Start listening");
+            try {
+                this.socket = DGRAM.createSocket("udp4");
+
+                this.socket.on("error", (err: any) => {
+                    console.log(`server error:\n${err.stack}`);
+                    this.socket.close();
+                    reject(err);
+                });
+
+                this.socket.on("listening", () => {
+                    this.socket.setRecvBufferSize(MAX_PACKET_SIZE);
+                    this.socket.setSendBufferSize(MAX_PACKET_SIZE);
+                    const address = this.socket.address();
+                    console.log(
+                        "UDP Server listening on " +
+                            address.address +
+                            ":" +
+                            address.port
+                    );
+                });
+
+                this.socket.on("message", async (msg: any, rinfo: any) => {
+                    if (this.onLiteningMessage(msg, rinfo)) {
+                        resolve();
+                    }
+                });
+                this.socket.bind(PORT + 1);
+            } catch (err) {
+                console.error(err);
+                reject();
+            }
+        });
+    }
+
+    private onConnectionMessage(msg: any, rinfo: any): Boolean {
+        try {
+            const sessionMsg = SessionMessage.fromBytes(msg);
+            switch (sessionMsg.getBody().protocolId()) {
+                case MessageType.NODE_ID_RESPONSE: {
+                    console.log(
+                        `Received: NODE_ID_RESPONSE from ${rinfo.address}:${
+                            rinfo.port
+                        }`
+                    );
+                    this.key = ec.genKeyPair();
+                    this.sendSessionMessage(MessageType.SECRET_REQUEST);
+
+                    break;
+                }
+                case MessageType.SECRET_ALLOWED: {
+                    console.log(
+                        `Received: SECRET_ALLOWED from ${rinfo.address}:${
+                            rinfo.port
+                        }`
+                    );
+                    this.targetPubkey = sessionMsg.getBody().getItem();
+                    if (this.targetPubkey === null) {
+                        throw Error("The key is not defined");
+                    }
+                    const pubKey = ec
+                        .keyFromPublic(
+                            "04".concat(
+                                this.targetPubkey.toEncodeObject().slice(2)
+                            ),
+                            "hex"
+                        )
+                        .getPublic();
+                    this.secret = new H256(
+                        this.key.derive(pubKey).toString(16)
+                    );
+                    const encodedNonce = this.nonce.rlpBytes();
+
+                    const iv = new Buffer(
+                        "00000000000000000000000000000000",
+                        "hex"
+                    );
+                    if (this.secret === null) {
+                        throw Error("Failed to get shared secret");
+                    }
+                    const key = new Buffer(
+                        this.secret.toEncodeObject().slice(2),
+                        "hex"
+                    );
+                    const encryptor = CRYPTO.createCipheriv(ALGORITHM, key, iv);
+
+                    encryptor.write(encodedNonce);
+                    encryptor.end();
+                    this.encodedSecret = new Buffer(encryptor.read());
+                    this.sendSessionMessage(MessageType.NONCE_REQUEST);
+                    break;
+                }
+                case MessageType.SECRET_DENIED: {
+                    console.log(
+                        `Received: SECRET_DENIED from ${rinfo.address}:${
+                            rinfo.port
+                        }`
+                    );
+                    throw Error(sessionMsg.getBody().getItem());
+                }
+                case MessageType.NONCE_ALLOWED: {
+                    console.log(
+                        `Received: NONCE_ALLOWED from ${rinfo.address}:${
+                            rinfo.port
+                        }`
+                    );
+
+                    const iv = new Buffer(
+                        this.nonce.toEncodeObject().slice(2),
+                        "hex"
+                    );
+                    if (this.secret === null) {
+                        throw Error("Failed to get shared secret");
+                    }
+                    const key = new Buffer(
+                        this.secret.toEncodeObject().slice(2),
+                        "hex"
+                    );
+                    const decryptor = CRYPTO.createDecipheriv(
+                        ALGORITHM,
+                        key,
+                        iv
+                    );
+                    decryptor.write(sessionMsg.getBody().getItem());
+                    decryptor.end();
+                    this.targetNonce = new H128(
+                        RLP.decode(decryptor.read()).toString("hex")
+                    );
+
+                    this.socket.close();
+                    return true;
+                }
+                case MessageType.NONCE_DENIED: {
+                    console.log(
+                        `Received: NONCE_DENIED from ${rinfo.address}:${
+                            rinfo.port
+                        }`
+                    );
+                    throw Error(sessionMsg.getBody().getItem());
+                }
+                default: {
+                    throw Error("Got invalid session message while connecting");
+                }
+            }
+            return false;
         } catch (err) {
             console.error(err);
+            return false;
         }
     }
 
-    listen(): void {
+    private onLiteningMessage(msg: any, rinfo: any): Boolean {
         try {
-            console.log("Start listening");
-            this.socket = DGRAM.createSocket("udp4");
-
-            this.socket.on("error", (err: any) => {
-                console.log(`server error:\n${err.stack}`);
-                this.socket.close();
-            });
-
-            this.socket.on("listening", () => {
-                this.socket.setRecvBufferSize(MAX_PACKET_SIZE);
-                this.socket.setSendBufferSize(MAX_PACKET_SIZE);
-                const address = this.socket.address();
-                console.log(
-                    "UDP Server listening on " +
-                        address.address +
-                        ":" +
-                        address.port
-                );
-            });
-
-            this.socket.on("message", async (msg: any, rinfo: any) => {
-                try {
-                    const sessionMsg = SessionMessage.fromBytes(msg);
-
-                    switch (sessionMsg.getBody().protocolId()) {
-                        case MessageType.NODE_ID_REQUEST: {
-                            console.log(
-                                `Received: NODE_ID_REQUEST from ${
-                                    rinfo.address
-                                }:${rinfo.port}`
-                            );
-                            this.setIp(rinfo.address);
-                            this.setPort(rinfo.port);
-                            this.sendSessionMessage(
-                                MessageType.NODE_ID_RESPONSE
-                            );
-                            break;
-                        }
-
-                        case MessageType.SECRET_REQUEST: {
-                            console.log(
-                                `Received: SECRET_REQUEST from ${
-                                    rinfo.address
-                                }:${rinfo.port}`
-                            );
-                            this.targetPubkey = sessionMsg.getBody().getItem();
-                            this.key = ec.genKeyPair();
-                            this.sendSessionMessage(MessageType.SECRET_ALLOWED);
-                            break;
-                        }
-
-                        case MessageType.NONCE_REQUEST: {
-                            console.log(
-                                `Received: NONCE_REQUEST from ${
-                                    rinfo.address
-                                }:${rinfo.port}`
-                            );
-                            if (this.targetPubkey === null) {
-                                throw Error("The key is not defined");
-                            }
-                            const pubKey = ec
-                                .keyFromPublic(
-                                    "04".concat(
-                                        this.targetPubkey
-                                            .toEncodeObject()
-                                            .slice(2)
-                                    ),
-                                    "hex"
-                                )
-                                .getPublic();
-                            this.secret = new H256(this.key.derive(pubKey));
-                            const ivd = new Buffer(
-                                "00000000000000000000000000000000",
-                                "hex"
-                            );
-                            if (this.secret === null) {
-                                throw Error("Failed to get shared secret");
-                            }
-                            const key = new Buffer(
-                                this.secret.toEncodeObject().slice(2),
-                                "hex"
-                            );
-                            const decryptor = CRYPTO.createDecipheriv(
-                                ALGORITHM,
-                                key,
-                                ivd
-                            );
-                            decryptor.write(sessionMsg.getBody().getItem());
-                            decryptor.end();
-                            this.targetNonce = new H128(
-                                RLP.decode(decryptor.read()).toString("hex")
-                            );
-
-                            const encodedNonce = this.nonce.rlpBytes();
-                            const ive = new Buffer(
-                                this.targetNonce.toEncodeObject().slice(2),
-                                "hex"
-                            );
-                            const encryptor = CRYPTO.createCipheriv(
-                                ALGORITHM,
-                                key,
-                                ive
-                            );
-
-                            encryptor.write(encodedNonce);
-                            encryptor.end();
-                            this.encodedSecret = new Buffer(encryptor.read());
-                            await this.sendSessionMessage(
-                                MessageType.NONCE_ALLOWED
-                            );
-                            this.socket.close();
-                            break;
-                        }
-
-                        default: {
-                            throw Error(
-                                "Got invalid session message while listening"
-                            );
-                        }
-                    }
-                } catch (err) {
-                    console.error(err);
+            const sessionMsg = SessionMessage.fromBytes(msg);
+            switch (sessionMsg.getBody().protocolId()) {
+                case MessageType.NODE_ID_REQUEST: {
+                    console.log(
+                        `Received: NODE_ID_REQUEST from ${rinfo.address}:${
+                            rinfo.port
+                        }`
+                    );
+                    this.setIp(rinfo.address);
+                    this.setPort(rinfo.port);
+                    this.sendSessionMessage(MessageType.NODE_ID_RESPONSE);
+                    break;
                 }
-            });
+                case MessageType.SECRET_REQUEST: {
+                    console.log(
+                        `Received: SECRET_REQUEST from ${rinfo.address}:${
+                            rinfo.port
+                        }`
+                    );
+                    this.targetPubkey = sessionMsg.getBody().getItem();
+                    this.key = ec.genKeyPair();
+                    this.sendSessionMessage(MessageType.SECRET_ALLOWED);
+                    break;
+                }
+                case MessageType.NONCE_REQUEST: {
+                    console.log(
+                        `Received: NONCE_REQUEST from ${rinfo.address}:${
+                            rinfo.port
+                        }`
+                    );
+                    if (this.targetPubkey === null) {
+                        throw Error("The key is not defined");
+                    }
+                    const pubKey = ec
+                        .keyFromPublic(
+                            "04".concat(
+                                this.targetPubkey.toEncodeObject().slice(2)
+                            ),
+                            "hex"
+                        )
+                        .getPublic();
+                    this.secret = new H256(
+                        this.key.derive(pubKey).toString(16)
+                    );
+                    const ivd = new Buffer(
+                        "00000000000000000000000000000000",
+                        "hex"
+                    );
+                    if (this.secret === null) {
+                        throw Error("Failed to get shared secret");
+                    }
+                    const key = new Buffer(
+                        this.secret.toEncodeObject().slice(2),
+                        "hex"
+                    );
+                    const decryptor = CRYPTO.createDecipheriv(
+                        ALGORITHM,
+                        key,
+                        ivd
+                    );
+                    decryptor.write(sessionMsg.getBody().getItem());
+                    decryptor.end();
+                    this.targetNonce = new H128(
+                        RLP.decode(decryptor.read()).toString("hex")
+                    );
 
-            this.socket.bind(PORT + 1);
+                    const encodedNonce = this.nonce.rlpBytes();
+                    const ive = new Buffer(
+                        this.targetNonce.toEncodeObject().slice(2),
+                        "hex"
+                    );
+                    const encryptor = CRYPTO.createCipheriv(
+                        ALGORITHM,
+                        key,
+                        ive
+                    );
+
+                    encryptor.write(encodedNonce);
+                    encryptor.end();
+                    this.encodedSecret = new Buffer(encryptor.read());
+                    this.sendSessionMessage(MessageType.NONCE_ALLOWED);
+                    this.socket.close();
+                    break;
+                }
+                default: {
+                    throw Error("Got invalid session message while listening");
+                }
+            }
+            return false;
         } catch (err) {
             console.error(err);
+            return false;
         }
     }
 

@@ -19,6 +19,8 @@ import { H128 } from "codechain-sdk/lib/core/H128";
 import { blake256WithKey } from "codechain-sdk/lib/utils";
 
 const RLP = require("rlp");
+const CRYPTO = require("crypto");
+const ALGORITHM = "AES-256-CBC";
 
 export enum MessageType {
     SYNC_ID = 0x00,
@@ -237,12 +239,24 @@ export class ExtensionMessage {
         version: number,
         extensionName: string,
         extensionVersion: number,
-        data: IData
+        data: IData,
+        secret: H256,
+        nonce: H128
     ) {
         this.version = version;
         this.extensionName = extensionName;
         this.extensionVersion = extensionVersion;
-        this.data = data;
+
+        if (data.type === "encrypted") {
+            const key = new Buffer(secret.toEncodeObject().slice(2), "hex");
+            const iv = new Buffer(nonce.toEncodeObject().slice(2), "hex");
+            const encryptor = CRYPTO.createCipheriv(ALGORITHM, key, iv);
+            encryptor.write(data.data);
+            encryptor.end();
+            this.data = { type: data.type, data: new Buffer(encryptor.read()) };
+        } else {
+            this.data = data;
+        }
     }
 
     protocolId(): number {
@@ -270,7 +284,7 @@ export class ExtensionMessage {
         return RLP.encode(this.toEncdoeObject());
     }
 
-    fromBytes(bytes: Buffer): ExtensionMessage {
+    fromBytes(bytes: Buffer, secret: H256, nonce: H128): ExtensionMessage {
         const decodedbytes = RLP.decode(bytes);
         const version = decodedbytes[0].readUIntBE(0, 1);
         const protocolId = decodedbytes[1].readUIntBE(0, 1);
@@ -279,19 +293,29 @@ export class ExtensionMessage {
         const data = decodedbytes[4];
 
         switch (protocolId) {
-            case MessageType.ENCRYPTED_ID:
+            case MessageType.ENCRYPTED_ID: {
+                const key = new Buffer(secret.toEncodeObject().slice(2), "hex");
+                const iv = new Buffer(nonce.toEncodeObject().slice(2), "hex");
+                const decryptor = CRYPTO.createDecipheriv(ALGORITHM, key, iv);
+                decryptor.write(data);
+                decryptor.end();
                 return new ExtensionMessage(
                     version,
                     extensionName,
                     extensionVersion,
-                    { type: "encrypted", data }
+                    { type: "encrypted", data: decryptor.read() },
+                    secret,
+                    nonce
                 );
+            }
             case MessageType.UNENCRYPTED_ID:
                 return new ExtensionMessage(
                     version,
                     extensionName,
                     extensionVersion,
-                    { type: "unencrypted", data }
+                    { type: "unencrypted", data },
+                    secret,
+                    nonce
                 );
             default:
                 throw Error("Unreachable");

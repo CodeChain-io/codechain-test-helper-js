@@ -8,9 +8,13 @@ describe("Check P2P Message RLP encoding", () => {
         "SyncMessage RLP encoding test",
         () => {
             const port = 1234;
-            const nodeid = new sessionMessage.NodeId("127.0.0.1", 8080);
-            const body = new p2pMessage.SyncMessage(0, port, nodeid);
-            const msg = new p2pMessage.HandshakeMessage(body);
+            const nodeId = new sessionMessage.NodeId("127.0.0.1", 8080);
+            const msg = new p2pMessage.HandshakeMessage({
+                type: "sync",
+                version: 0,
+                port,
+                nodeId
+            });
             expect([...msg.rlpBytes()]).toEqual([
                 205,
                 128,
@@ -32,8 +36,10 @@ describe("Check P2P Message RLP encoding", () => {
     );
 
     test("AckMessage RLP encoding test", () => {
-        const body = new p2pMessage.AckMessage(0);
-        const msg = new p2pMessage.HandshakeMessage(body);
+        const msg = new p2pMessage.HandshakeMessage({
+            type: "ack",
+            version: 0
+        });
         expect([...msg.rlpBytes()]).toEqual([194, 128, 1]);
     });
 
@@ -224,9 +230,13 @@ describe("Check P2P Message RLP encoding", () => {
 
     test("SignedMessage RLP encoding test", () => {
         const port = 1234;
-        const nodeid = new sessionMessage.NodeId("127.0.0.1", 8080);
-        const body = new p2pMessage.SyncMessage(0, port, nodeid);
-        const msg = new p2pMessage.HandshakeMessage(body);
+        const nodeId = new sessionMessage.NodeId("127.0.0.1", 8080);
+        const msg = new p2pMessage.HandshakeMessage({
+            type: "sync",
+            version: 0,
+            port,
+            nodeId
+        });
         const signedmsg = new p2pMessage.SignedMessage(
             msg,
             new H128("00000000000000000000000000000000")

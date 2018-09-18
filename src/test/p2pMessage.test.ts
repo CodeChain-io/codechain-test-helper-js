@@ -1,6 +1,7 @@
 import * as p2pMessage from "../p2pMessage";
 import * as sessionMessage from "../sessionMessage";
 import { H128 } from "codechain-sdk/lib/core/H128";
+import { H256 } from "codechain-sdk/lib/core/H256";
 
 describe("Check P2P Message RLP encoding", () => {
     test(
@@ -105,10 +106,15 @@ describe("Check P2P Message RLP encoding", () => {
             0,
             extensionName,
             extensionVersion,
-            { type: "encrypted", data: new Buffer(data) }
+            { type: "encrypted", data: new Buffer(data) },
+            new H256(
+                "0x448c7925c992f86cb4b890bea81f18818aef8ec35189e00fdf7b5e41e90a4c1b"
+            ),
+            new H128("0x6d21cfc0a73acea109f24bb408b4b676")
         );
+        console.log(msg);
         expect([...msg.rlpBytes()]).toEqual([
-            231,
+            236,
             128,
             5,
             135,
@@ -120,34 +126,39 @@ describe("Check P2P Message RLP encoding", () => {
             112,
             116,
             3,
-            155,
-            116,
-            104,
-            105,
-            115,
-            32,
-            100,
-            97,
-            116,
-            97,
-            32,
-            109,
-            117,
-            115,
-            116,
-            32,
-            98,
-            101,
-            32,
-            101,
-            110,
-            99,
-            114,
-            121,
-            112,
-            116,
-            101,
-            100
+            160,
+            178,
+            137,
+            222,
+            48,
+            240,
+            103,
+            231,
+            7,
+            162,
+            106,
+            58,
+            119,
+            41,
+            5,
+            156,
+            151,
+            207,
+            46,
+            78,
+            135,
+            218,
+            69,
+            182,
+            119,
+            60,
+            68,
+            199,
+            76,
+            216,
+            177,
+            205,
+            105
         ]);
     });
 
@@ -159,7 +170,11 @@ describe("Check P2P Message RLP encoding", () => {
             0,
             extensionName,
             extensionVersion,
-            { type: "unencrypted", data: new Buffer(data) }
+            { type: "unencrypted", data: new Buffer(data) },
+            new H256(
+                "0x0000000000000000000000000000000000000000000000000000000000000000"
+            ),
+            new H128("0x00000000000000000000000000000000")
         );
         expect([...msg.rlpBytes()]).toEqual([
             233,

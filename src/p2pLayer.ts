@@ -194,7 +194,6 @@ export class P2pLayer {
         if (nonce == null) throw Error("Nonce is not specified");
 
         const msg = SignedMessage.fromBytes(data, secret, nonce);
-        console.log(msg);
         switch (msg.protocolId()) {
             case MessageType.SYNC_ID: {
                 console.log("Got SYNC_ID message");

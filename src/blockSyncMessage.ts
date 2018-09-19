@@ -65,7 +65,14 @@ export class BlockSyncMessage {
     toEncodeObject(): Array<any> {
         switch (this.body.type) {
             case "status": {
-                throw Error("Not implemented");
+                return [
+                    MessageType.MESSAGE_ID_STATUS,
+                    [
+                        this.body.totalScore.toEncodeObject(),
+                        this.body.bestHash.toEncodeObject(),
+                        this.body.genesisHash.toEncodeObject()
+                    ]
+                ];
             }
             case "request": {
                 return [
@@ -105,7 +112,7 @@ export class BlockSyncMessage {
         } else {
             const id = decodedmsg[1].readUIntBE(0, 1);
             const msg = decodedmsg[2];
-            switch (id) {
+            switch (msgId) {
                 case MessageType.MESSAGE_ID_GET_HEADERS:
                 case MessageType.MESSAGE_ID_GET_BODIES:
                 case MessageType.MESSAGE_ID_GET_STATE_HEAD:

@@ -29,6 +29,10 @@ export class ParcelSyncMessage {
         this.body = body;
     }
 
+    getBody(): parcelSyncMessageBody {
+        return this.body;
+    }
+
     toEncodeObject(): Array<any> {
         return this.body.data;
     }

@@ -18,7 +18,7 @@ import { U256 } from "codechain-sdk/lib/core/U256";
 
 const RLP = require("rlp");
 
-enum MessageType {
+export enum MessageType {
     MESSAGE_ID_STATUS = 0x01,
     MESSAGE_ID_GET_HEADERS,
     MESSAGE_ID_HEADERS,
@@ -58,6 +58,10 @@ export class BlockSyncMessage {
         this.body = body;
     }
 
+    getBody(): BlockSyncMessageBody {
+        return this.body;
+    }
+
     toEncodeObject(): Array<any> {
         switch (this.body.type) {
             case "status": {
@@ -86,11 +90,20 @@ export class BlockSyncMessage {
 
     static fromBytes(bytes: Buffer): BlockSyncMessage {
         const decodedmsg = RLP.decode(bytes);
-        const msgId = decodedmsg[0].readUint(0, 1);
+        const msgId = decodedmsg[0].readUIntBE(0, 1);
         if (msgId === MessageType.MESSAGE_ID_STATUS) {
-            throw Error("Not implemented");
+            const msg = decodedmsg[1];
+            const totalScore = new U256(parseInt(msg[0].toString("hex"), 16));
+            const bestHash = new H256(msg[1].toString("hex"));
+            const genesisHash = new H256(msg[2].toString("hex"));
+            return new BlockSyncMessage({
+                type: "status",
+                totalScore,
+                bestHash,
+                genesisHash
+            });
         } else {
-            const id = decodedmsg[1].readUint(0, 1);
+            const id = decodedmsg[1].readUIntBE(0, 1);
             const msg = decodedmsg[2];
             switch (id) {
                 case MessageType.MESSAGE_ID_GET_HEADERS:
@@ -197,8 +210,8 @@ export class RequestMessage {
             case MessageType.MESSAGE_ID_GET_HEADERS: {
                 return new RequestMessage({
                     type: "headers",
-                    startNumber: bytes[0].readUint(0, 1),
-                    maxCount: bytes[1].readUint(0, 1)
+                    startNumber: bytes[0].readUIntBE(0, 1),
+                    maxCount: bytes[1].readUIntBE(0, 1)
                 });
             }
             case MessageType.MESSAGE_ID_GET_BODIES: {
@@ -245,6 +258,10 @@ export class ResponseMessage {
 
     constructor(body: responseMessageBody) {
         this.body = body;
+    }
+
+    getBody(): responseMessageBody {
+        return this.body;
     }
 
     messageId(): number {

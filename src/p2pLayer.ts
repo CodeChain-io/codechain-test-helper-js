@@ -144,7 +144,7 @@ export class P2pLayer {
         }
     }
 
-    sendExtensionMessage(
+    async sendExtensionMessage(
         extensionName: string,
         extensionVersion: number,
         data: Buffer,
@@ -173,14 +173,14 @@ export class P2pLayer {
             );
         }
         const signedMsg = new SignedMessage(msg, this.session.getTargetNonce());
-        this.writeData(signedMsg.rlpBytes());
+        await this.writeData(signedMsg.rlpBytes());
     }
 
-    private writeData(data: Buffer) {
-        const success = !this.socket.write(data);
+    private async writeData(data: Buffer) {
+        const success = await !this.socket.write(data);
         if (!success) {
-            (data => {
-                this.socket.once("drain", () => {
+            (async data => {
+                await this.socket.once("drain", () => {
                     this.writeData(data);
                 });
             })(data);
@@ -244,12 +244,16 @@ export class P2pLayer {
                     msg.getData().data
                 );
                 this.arrivedExtensionMessage.push(extensionMsg);
+                console.log(extensionMsg);
+                break;
             }
             case "parcel-propagation": {
                 const extensionMsg = ParcelSyncMessage.fromBytes(
                     msg.getData().data
                 );
                 this.arrivedExtensionMessage.push(extensionMsg);
+                console.log(extensionMsg);
+                break;
             }
             default:
                 throw Error("Not implemented");

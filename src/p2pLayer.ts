@@ -30,57 +30,62 @@ export class P2pLayer {
     private port: number;
     private session: Session;
     private socket: any;
+    private allowedFinish: boolean;
 
     constructor(ip: string, port: number) {
         this.session = new Session(ip, port);
         this.socket = new NET.Socket();
         this.ip = ip;
         this.port = port;
+        this.allowedFinish = false;
     }
 
-    async connect(): Promise<void> {
-        try {
-            await this.session.connect();
-        } catch (err) {
-            console.error(err);
-        }
-
-        this.socket.connect(
-            { port: this.port, host: this.ip },
-            () => {
-                console.log("Start TCP connection");
-                console.log(
-                    "   local = %s:%s",
-                    this.socket.localAddress,
-                    this.socket.localPort
-                );
-                console.log(
-                    "   remote = %s:%s",
-                    this.socket.remoteAddress,
-                    this.socket.remotePort
-                );
-                this.sendP2pMessage(MessageType.ACK_ID);
-
-                this.socket.on("data", (data: any) => {
-                    this.onP2pMessage(data);
-                });
-                this.socket.on("end", () => {
-                    console.log("TCP disconnected");
-                });
-                this.socket.on("error", (err: any) => {
-                    console.log("Socket Error: ", JSON.stringify(err));
-                });
-                this.socket.on("close", () => {
-                    console.log("Socket Closed");
-                });
+    async connect(): Promise<{}> {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await this.session.connect();
+            } catch (err) {
+                console.error(err);
+                reject(err);
             }
-        );
+
+            this.socket.connect(
+                { port: this.port, host: this.ip },
+                () => {
+                    console.log("Start TCP connection");
+                    console.log(
+                        "   local = %s:%s",
+                        this.socket.localAddress,
+                        this.socket.localPort
+                    );
+                    console.log(
+                        "   remote = %s:%s",
+                        this.socket.remoteAddress,
+                        this.socket.remotePort
+                    );
+                    this.sendP2pMessage(MessageType.SYNC_ID);
+
+                    this.socket.on("data", (data: any) => {
+                        if (this.onP2pMessage(data) === true) resolve();
+                    });
+                    this.socket.on("end", () => {
+                        console.log("TCP disconnected");
+                    });
+                    this.socket.on("error", (err: any) => {
+                        console.log("Socket Error: ", JSON.stringify(err));
+                    });
+                    this.socket.on("close", () => {
+                        console.log("Socket Closed");
+                    });
+                }
+            );
+        });
     }
 
     private sendP2pMessage(messageType: MessageType): void {
         switch (messageType) {
-            case MessageType.ACK_ID: {
-                console.log("Send ACK_ID Message");
+            case MessageType.SYNC_ID: {
+                console.log("Send SYNC_ID Message");
                 const nodeId = new NodeId(this.socket.localAddress, PORT);
                 const msg = new HandshakeMessage({
                     type: "sync",
@@ -172,7 +177,7 @@ export class P2pLayer {
         }
     }
 
-    onP2pMessage(data: any) {
+    onP2pMessage(data: any): boolean {
         const secret = this.session.getSecret();
         const nonce = this.session.getNonce();
         if (secret == null) throw Error("Secret is not specified");
@@ -196,6 +201,8 @@ export class P2pLayer {
             }
             case MessageType.ALLOWED_ID: {
                 console.log("Got ALLOWED_ID message");
+                if (this.allowedFinish) return true;
+                this.allowedFinish = true;
                 break;
             }
             case MessageType.DENIED_ID: {
@@ -213,5 +220,7 @@ export class P2pLayer {
             default:
                 throw Error("Unreachable");
         }
+
+        return false;
     }
 }

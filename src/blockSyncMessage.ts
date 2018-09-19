@@ -113,6 +113,8 @@ export class BlockSyncMessage {
                         message: ResponseMessage.decode(msgId, msg)
                     });
                 }
+                default:
+                    throw Error("Unreachable");
             }
         }
     }

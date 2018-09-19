@@ -22,6 +22,10 @@ import {
     ExtensionMessage
 } from "./p2pMessage";
 import { NodeId } from "./sessionMessage";
+import { BlockSyncMessage } from "./blockSyncMessage";
+import { ParcelSyncMessage } from "./parcelSyncMessage";
+import { Parcel } from "codechain-sdk/lib/core/Parcel";
+import { Extension } from "typescript";
 
 const NET = require("net");
 
@@ -211,10 +215,13 @@ export class P2pLayer {
             }
             case MessageType.ENCRYPTED_ID: {
                 console.log("Got ENCRYPTED_ID message");
+                // I don't think it is the best way to notify type
+                this.onExtensionMessage(msg as ExtensionMessage);
                 break;
             }
             case MessageType.UNENCRYPTED_ID: {
                 console.log("Got UNENCRYPTED_ID message");
+                this.onExtensionMessage(msg as ExtensionMessage);
                 break;
             }
             default:
@@ -222,5 +229,22 @@ export class P2pLayer {
         }
 
         return false;
+    }
+
+    onExtensionMessage(msg: ExtensionMessage) {
+        switch (msg.getName()) {
+            case "block-propagation": {
+                const extensionMsg = BlockSyncMessage.fromBytes(
+                    msg.getData().data
+                );
+            }
+            case "parcel-propagation": {
+                const extensionMsg = ParcelSyncMessage.fromBytes(
+                    msg.getData().data
+                );
+            }
+            default:
+                throw Error("Not implemented");
+        }
     }
 }

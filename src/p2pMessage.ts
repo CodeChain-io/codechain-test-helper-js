@@ -260,6 +260,14 @@ export class ExtensionMessage {
         }
     }
 
+    getName(): string {
+        return this.extensionName;
+    }
+
+    getData(): IData {
+        return this.data;
+    }
+
     protocolId(): number {
         switch (this.data.type) {
             case "encrypted":
@@ -316,7 +324,7 @@ export class ExtensionMessage {
                     version,
                     extensionName,
                     extensionVersion,
-                    { type: "unencrypted", data: decryptor.read() },
+                    { type: "encrypted", data: decryptor.read() },
                     secret,
                     nonce
                 );

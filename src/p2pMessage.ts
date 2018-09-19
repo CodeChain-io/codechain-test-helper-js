@@ -44,7 +44,7 @@ export class HandshakeMessage {
             case "sync": {
                 return MessageType.SYNC_ID;
             }
-            case "sync": {
+            case "ack": {
                 return MessageType.ACK_ID;
             }
             default:
@@ -245,9 +245,9 @@ export class ExtensionMessage {
         this.extensionVersion = extensionVersion;
 
         if (data.type === "encrypted") {
-            if (secret === undefined)
+            if (secret == undefined)
                 throw Error("The secret is needed to make Encrypted Message");
-            if (nonce === undefined)
+            if (nonce == undefined)
                 throw Error("The nonce is needed to make Encrypted Message");
             const key = new Buffer(secret.toEncodeObject().slice(2), "hex");
             const iv = new Buffer(nonce.toEncodeObject().slice(2), "hex");
@@ -271,7 +271,7 @@ export class ExtensionMessage {
         }
     }
 
-    toEncdoeObject(): Array<any> {
+    toEncodeObject(): Array<any> {
         return [
             this.version,
             this.protocolId(),
@@ -282,7 +282,7 @@ export class ExtensionMessage {
     }
 
     rlpBytes(): Buffer {
-        return RLP.encode(this.toEncdoeObject());
+        return RLP.encode(this.toEncodeObject());
     }
 
     static fromBytes(
@@ -293,17 +293,17 @@ export class ExtensionMessage {
         const decodedbytes = RLP.decode(bytes);
         const version = decodedbytes[0].readUIntBE(0, 1);
         const protocolId = decodedbytes[1].readUIntBE(0, 1);
-        const extensionName = decodedbytes[2];
-        const extensionVersion = decodedbytes[3];
+        const extensionName = decodedbytes[2].toString();
+        const extensionVersion = decodedbytes[3].readUIntBE(0, 1);
         const data = decodedbytes[4];
 
         switch (protocolId) {
             case MessageType.ENCRYPTED_ID: {
-                if (secret === undefined)
+                if (secret == undefined)
                     throw Error(
                         "The secret is needed to encode Encrypted Message"
                     );
-                if (nonce === undefined)
+                if (nonce == undefined)
                     throw Error(
                         "The nonce is needed to encode Encrypted Message"
                     );
@@ -377,59 +377,51 @@ export class SignedMessage {
         return RLP.encode(this.toEncodeObject());
     }
 
-    static fromBytes(bytes: Buffer, nonce?: H128, secret?: H256) {
+    static fromBytes(bytes: Buffer, nonce?: H128, secret?: H256): Message {
         const decodedbytes = RLP.decode(bytes);
         const message = decodedbytes[0];
         // const signature = decodedbytes[1];
 
         const protocol = RLP.decode(message)[1].readUIntBE(0, 1);
         switch (protocol) {
-            case MessageType.ACK_ID: {
-                console.log("Got ACK_ID message");
-                const msg = HandshakeMessage.fromBytes(message);
-                console.log(msg);
-                break;
-            }
             case MessageType.SYNC_ID: {
-                console.log("Got SYNC_ID message");
-                break;
+                const msg = HandshakeMessage.fromBytes(message);
+                return msg;
+            }
+            case MessageType.ACK_ID: {
+                const msg = HandshakeMessage.fromBytes(message);
+                return msg;
             }
             case MessageType.REQUEST_ID: {
-                console.log("Got REQUEST_ID message");
-                break;
+                const msg = NegotiationMessage.fromBytes(message);
+                return msg;
             }
             case MessageType.ALLOWED_ID: {
-                console.log("Got ALLOWED_ID message");
                 const msg = NegotiationMessage.fromBytes(message);
-                console.log(msg);
-                break;
+                return msg;
             }
             case MessageType.DENIED_ID: {
-                console.log("Got DENIED_ID message");
-                break;
+                const msg = NegotiationMessage.fromBytes(message);
+                return msg;
             }
             case MessageType.ENCRYPTED_ID: {
-                console.log("Got ENCRYPTED_ID message");
-                if (secret === undefined)
+                if (secret == undefined)
                     throw Error(
                         "The secret is needed to decode Encrypted Message"
                     );
-                if (nonce === undefined)
+                if (nonce == undefined)
                     throw Error(
                         "The nonce is needed to decode Encrypted Message"
                     );
                 const msg = ExtensionMessage.fromBytes(message, secret, nonce);
-                console.log(msg);
-                break;
+                return msg;
             }
             case MessageType.UNENCRYPTED_ID: {
-                console.log("Got UNENCRYPTED_ID message");
                 const msg = ExtensionMessage.fromBytes(message, secret, nonce);
-                console.log(msg);
-                break;
+                return msg;
             }
             default: {
-                throw Error("Got Invalid p2p message");
+                throw Error("Got Invalid RLP data of p2p message");
             }
         }
     }

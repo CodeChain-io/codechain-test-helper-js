@@ -50,7 +50,7 @@ export class Session {
     private nonce: H128;
     private secret: null | H256;
     private encodedSecret: null | Buffer;
-    private targetNonce: null | H128;
+    private targetNonce: H128;
     private targetPubkey: null | H512;
 
     constructor(ip: string, port: number) {
@@ -59,7 +59,7 @@ export class Session {
         this.key = null;
         this.nonce = new H128("0x000000000000000000000000DEADBEEF");
         this.secret = null;
-        this.targetNonce = null;
+        this.targetNonce = new H128("0x00000000000000000000000000000000");
         this.targetPubkey = null;
         this.encodedSecret = null;
     }
@@ -110,6 +110,14 @@ export class Session {
 
     getTargetPubkey() {
         return this.targetPubkey;
+    }
+
+    getSocket() {
+        return this.socket;
+    }
+
+    getSecret() {
+        return this.secret;
     }
 
     async connect(): Promise<{}> {
@@ -215,7 +223,7 @@ export class Session {
                         }`
                     );
                     this.targetPubkey = sessionMsg.getBody().getItem();
-                    if (this.targetPubkey === null) {
+                    if (this.targetPubkey == null) {
                         throw Error("The key is not defined");
                     }
                     const pubKey = ec
@@ -227,7 +235,10 @@ export class Session {
                         )
                         .getPublic();
                     this.secret = new H256(
-                        this.key.derive(pubKey).toString(16)
+                        (this.key.derive(pubKey).toString(16) + "0").slice(
+                            0,
+                            64
+                        )
                     );
                     const encodedNonce = this.nonce.rlpBytes();
 
@@ -235,7 +246,7 @@ export class Session {
                         "00000000000000000000000000000000",
                         "hex"
                     );
-                    if (this.secret === null) {
+                    if (this.secret == null) {
                         throw Error("Failed to get shared secret");
                     }
                     const key = new Buffer(
@@ -269,7 +280,7 @@ export class Session {
                         this.nonce.toEncodeObject().slice(2),
                         "hex"
                     );
-                    if (this.secret === null) {
+                    if (this.secret == null) {
                         throw Error("Failed to get shared secret");
                     }
                     const key = new Buffer(
@@ -341,7 +352,7 @@ export class Session {
                             rinfo.port
                         }`
                     );
-                    if (this.targetPubkey === null) {
+                    if (this.targetPubkey == null) {
                         throw Error("The key is not defined");
                     }
                     const pubKey = ec
@@ -359,7 +370,7 @@ export class Session {
                         "00000000000000000000000000000000",
                         "hex"
                     );
-                    if (this.secret === null) {
+                    if (this.secret == null) {
                         throw Error("Failed to get shared secret");
                     }
                     const key = new Buffer(
@@ -442,7 +453,7 @@ export class Session {
             }
             case MessageType.SECRET_REQUEST: {
                 console.log("Send SECRET_REQUESTE");
-                if (this.key === null) {
+                if (this.key == null) {
                     throw Error("The key is not defined");
                 }
                 const message = new SessionMessage(
@@ -466,7 +477,7 @@ export class Session {
             }
             case MessageType.SECRET_ALLOWED: {
                 console.log("Send SECRET_ALLOWED");
-                if (this.key === null) {
+                if (this.key == null) {
                     throw Error("Secret key is not defined");
                 }
                 const message = new SessionMessage(
@@ -504,7 +515,7 @@ export class Session {
             }
             case MessageType.NONCE_REQUEST: {
                 console.log("Send NONCE_REQUEST");
-                if (this.encodedSecret === null) {
+                if (this.encodedSecret == null) {
                     throw Error("Secret is not maded");
                 }
                 const message = new SessionMessage(
@@ -521,7 +532,7 @@ export class Session {
             }
             case MessageType.NONCE_ALLOWED: {
                 console.log("Send NONCE_ALLOWED");
-                if (this.encodedSecret === null) {
+                if (this.encodedSecret == null) {
                     throw Error("Secret is not maded");
                 }
                 const message = new SessionMessage(

@@ -24,8 +24,6 @@ import {
 import { NodeId } from "./sessionMessage";
 import { BlockSyncMessage } from "./blockSyncMessage";
 import { ParcelSyncMessage } from "./parcelSyncMessage";
-import { Parcel } from "codechain-sdk/lib/core/Parcel";
-import { Extension } from "typescript";
 
 const NET = require("net");
 
@@ -35,6 +33,9 @@ export class P2pLayer {
     private session: Session;
     private socket: any;
     private allowedFinish: boolean;
+    private arrivedExtensionMessage: Array<
+        BlockSyncMessage | ParcelSyncMessage
+    >;
 
     constructor(ip: string, port: number) {
         this.session = new Session(ip, port);
@@ -42,6 +43,11 @@ export class P2pLayer {
         this.ip = ip;
         this.port = port;
         this.allowedFinish = false;
+        this.arrivedExtensionMessage = [];
+    }
+
+    getArrivedExtensionMessage(): Array<BlockSyncMessage | ParcelSyncMessage> {
+        return this.arrivedExtensionMessage;
     }
 
     async connect(): Promise<{}> {
@@ -237,11 +243,13 @@ export class P2pLayer {
                 const extensionMsg = BlockSyncMessage.fromBytes(
                     msg.getData().data
                 );
+                this.arrivedExtensionMessage.push(extensionMsg);
             }
             case "parcel-propagation": {
                 const extensionMsg = ParcelSyncMessage.fromBytes(
                     msg.getData().data
                 );
+                this.arrivedExtensionMessage.push(extensionMsg);
             }
             default:
                 throw Error("Not implemented");

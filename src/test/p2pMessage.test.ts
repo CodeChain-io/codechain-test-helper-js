@@ -118,7 +118,6 @@ describe("Check P2P Message RLP encoding", () => {
             ),
             new H128("0x6d21cfc0a73acea109f24bb408b4b676")
         );
-        console.log(msg);
         expect([...msg.rlpBytes()]).toEqual([
             236,
             128,

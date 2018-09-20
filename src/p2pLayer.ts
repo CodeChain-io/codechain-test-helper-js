@@ -36,6 +36,7 @@ export class P2pLayer {
     private arrivedExtensionMessage: Array<
         BlockSyncMessage | ParcelSyncMessage
     >;
+    private tcpBuffer: Buffer;
 
     constructor(ip: string, port: number) {
         this.session = new Session(ip, port);
@@ -44,6 +45,7 @@ export class P2pLayer {
         this.port = port;
         this.allowedFinish = false;
         this.arrivedExtensionMessage = [];
+        this.tcpBuffer = new Buffer([]);
     }
 
     getArrivedExtensionMessage(): Array<BlockSyncMessage | ParcelSyncMessage> {
@@ -75,8 +77,70 @@ export class P2pLayer {
                     );
                     this.sendP2pMessage(MessageType.SYNC_ID);
 
-                    this.socket.on("data", (data: any) => {
-                        if (this.onP2pMessage(data) === true) resolve();
+                    this.socket.on("data", (data: Buffer) => {
+                        try {
+                            this.tcpBuffer = Buffer.concat([
+                                this.tcpBuffer,
+                                data
+                            ]);
+                            while (this.tcpBuffer.length !== 0) {
+                                const len = this.tcpBuffer.readUIntBE(0, 1);
+
+                                if (len >= 0xf8) {
+                                    const lenOfLen = len - 0xf7;
+                                    const dataLen = this.tcpBuffer
+                                        .slice(1, 1 + lenOfLen)
+                                        .readUIntBE(0, lenOfLen);
+                                    if (
+                                        this.tcpBuffer.length >=
+                                        dataLen + lenOfLen + 1
+                                    ) {
+                                        const rlpPacket = this.tcpBuffer.slice(
+                                            0,
+                                            dataLen + lenOfLen + 1
+                                        );
+                                        this.tcpBuffer = this.tcpBuffer.slice(
+                                            dataLen + lenOfLen + 1,
+                                            this.tcpBuffer.length
+                                        );
+                                        if (
+                                            this.onP2pMessage(rlpPacket) ===
+                                            true
+                                        )
+                                            resolve();
+                                    } else {
+                                        throw Error(
+                                            "The rlp data has not arrived yet"
+                                        );
+                                    }
+                                } else if (len >= 0xc0) {
+                                    const dataLen = len - 0xc0;
+                                    if (this.tcpBuffer.length >= dataLen + 1) {
+                                        const rlpPacket = this.tcpBuffer.slice(
+                                            0,
+                                            dataLen + 1
+                                        );
+                                        this.tcpBuffer = this.tcpBuffer.slice(
+                                            dataLen + 1,
+                                            this.tcpBuffer.length
+                                        );
+                                        if (
+                                            this.onP2pMessage(rlpPacket) ===
+                                            true
+                                        )
+                                            resolve();
+                                    } else {
+                                        throw Error(
+                                            "The rlp data has not arrived yet"
+                                        );
+                                    }
+                                } else {
+                                    throw Error("Invalid RLP data");
+                                }
+                            }
+                        } catch (err) {
+                            console.error(err);
+                        }
                     });
                     this.socket.on("end", () => {
                         console.log("TCP disconnected");

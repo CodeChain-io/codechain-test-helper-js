@@ -192,45 +192,50 @@ export class P2pLayer {
         const nonce = this.session.getNonce();
         if (secret == null) throw Error("Secret is not specified");
         if (nonce == null) throw Error("Nonce is not specified");
+        try {
+            const msg = SignedMessage.fromBytes(data, secret, nonce);
 
-        const msg = SignedMessage.fromBytes(data, secret, nonce);
-        switch (msg.protocolId()) {
-            case MessageType.SYNC_ID: {
-                console.log("Got SYNC_ID message");
-                break;
+            switch (msg.protocolId()) {
+                case MessageType.SYNC_ID: {
+                    console.log("Got SYNC_ID message");
+                    break;
+                }
+                case MessageType.ACK_ID: {
+                    console.log("Got ACK_ID message");
+                    this.sendP2pMessage(MessageType.REQUEST_ID);
+                    break;
+                }
+                case MessageType.REQUEST_ID: {
+                    console.log("Got REQUEST_ID message");
+                    break;
+                }
+                case MessageType.ALLOWED_ID: {
+                    console.log("Got ALLOWED_ID message");
+                    if (this.allowedFinish) return true;
+                    this.allowedFinish = true;
+                    break;
+                }
+                case MessageType.DENIED_ID: {
+                    console.log("Got DENIED_ID message");
+                    break;
+                }
+                case MessageType.ENCRYPTED_ID: {
+                    console.log("Got ENCRYPTED_ID message");
+                    // I don't think it is the best way to notify type
+                    this.onExtensionMessage(msg as ExtensionMessage);
+                    break;
+                }
+                case MessageType.UNENCRYPTED_ID: {
+                    console.log("Got UNENCRYPTED_ID message");
+                    this.onExtensionMessage(msg as ExtensionMessage);
+                    break;
+                }
+                default:
+                    throw Error("Unreachable");
             }
-            case MessageType.ACK_ID: {
-                console.log("Got ACK_ID message");
-                this.sendP2pMessage(MessageType.REQUEST_ID);
-                break;
-            }
-            case MessageType.REQUEST_ID: {
-                console.log("Got REQUEST_ID message");
-                break;
-            }
-            case MessageType.ALLOWED_ID: {
-                console.log("Got ALLOWED_ID message");
-                if (this.allowedFinish) return true;
-                this.allowedFinish = true;
-                break;
-            }
-            case MessageType.DENIED_ID: {
-                console.log("Got DENIED_ID message");
-                break;
-            }
-            case MessageType.ENCRYPTED_ID: {
-                console.log("Got ENCRYPTED_ID message");
-                // I don't think it is the best way to notify type
-                this.onExtensionMessage(msg as ExtensionMessage);
-                break;
-            }
-            case MessageType.UNENCRYPTED_ID: {
-                console.log("Got UNENCRYPTED_ID message");
-                this.onExtensionMessage(msg as ExtensionMessage);
-                break;
-            }
-            default:
-                throw Error("Unreachable");
+        } catch (err) {
+            console.log(data);
+            console.error(err);
         }
 
         return false;
@@ -244,6 +249,7 @@ export class P2pLayer {
                 );
                 this.arrivedExtensionMessage.push(extensionMsg);
                 console.log(extensionMsg);
+                console.log(extensionMsg.getBody());
                 break;
             }
             case "parcel-propagation": {

@@ -65,6 +65,8 @@ export class HandshakeMessage {
             case "ack": {
                 return [this.body.version, this.protocolId()];
             }
+            default:
+                throw Error("Unreachable");
         }
     }
 

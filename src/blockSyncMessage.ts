@@ -88,6 +88,8 @@ export class BlockSyncMessage {
                     this.body.message.toEncodeObject()
                 ];
             }
+            default:
+                throw Error("Unreachable");
         }
     }
 

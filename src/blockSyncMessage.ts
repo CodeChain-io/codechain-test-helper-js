@@ -41,13 +41,13 @@ interface IStatus {
 
 interface IRequest {
     type: "request";
-    id: MessageType;
+    id: number;
     message: RequestMessage;
 }
 
 interface IResponse {
     type: "response";
-    id: MessageType;
+    id: number;
     message: ResponseMessage;
 }
 
@@ -144,13 +144,13 @@ export class BlockSyncMessage {
 
 type requestMessageBody = IHeadersq | IBodiesq | IStateHeadq | IStateChunkq;
 
-interface IHeadersq {
+export interface IHeadersq {
     type: "headers";
     startNumber: number;
     maxCount: number;
 }
 
-interface IBodiesq {
+export interface IBodiesq {
     type: "bodies";
     data: Array<H256>;
 }
@@ -171,6 +171,10 @@ export class RequestMessage {
 
     constructor(body: requestMessageBody) {
         this.body = body;
+    }
+
+    getBody(): requestMessageBody {
+        return this.body;
     }
 
     messageId(): number {
@@ -244,12 +248,12 @@ type responseMessageBody = IHeaderss | IBodiess | IStateHeads | IStateChunks;
 
 interface IHeaderss {
     type: "headers";
-    data: Array<Buffer>;
+    data: Array<Array<Buffer>>;
 }
 
 interface IBodiess {
     type: "bodies";
-    data: Array<Array<Buffer>>;
+    data: Array<Array<Array<Buffer>>>;
 }
 
 interface IStateHeads {
@@ -319,13 +323,13 @@ export class ResponseMessage {
             case MessageType.MESSAGE_ID_HEADERS: {
                 return new ResponseMessage({
                     type: "headers",
-                    data: bytes[0]
+                    data: bytes
                 });
             }
             case MessageType.MESSAGE_ID_GET_BODIES: {
                 return new ResponseMessage({
                     type: "bodies",
-                    data: bytes[0]
+                    data: bytes
                 });
             }
             case MessageType.MESSAGE_ID_GET_STATE_HEAD: {

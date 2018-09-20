@@ -24,6 +24,7 @@ import {
 import { NodeId } from "./sessionMessage";
 import { BlockSyncMessage } from "./blockSyncMessage";
 import { ParcelSyncMessage } from "./parcelSyncMessage";
+import { H256 } from "codechain-sdk/lib/core/H256";
 
 const NET = require("net");
 
@@ -37,6 +38,7 @@ export class P2pLayer {
         BlockSyncMessage | ParcelSyncMessage
     >;
     private tcpBuffer: Buffer;
+    private genesisHash: H256;
 
     constructor(ip: string, port: number) {
         this.session = new Session(ip, port);
@@ -46,6 +48,13 @@ export class P2pLayer {
         this.allowedFinish = false;
         this.arrivedExtensionMessage = [];
         this.tcpBuffer = new Buffer([]);
+        this.genesisHash = new H256(
+            "0000000000000000000000000000000000000000000000000000000000000000"
+        );
+    }
+
+    getGenesisHash(): H256 {
+        return this.genesisHash;
     }
 
     getArrivedExtensionMessage(): Array<BlockSyncMessage | ParcelSyncMessage> {
@@ -85,7 +94,6 @@ export class P2pLayer {
                             ]);
                             while (this.tcpBuffer.length !== 0) {
                                 const len = this.tcpBuffer.readUIntBE(0, 1);
-
                                 if (len >= 0xf8) {
                                     const lenOfLen = len - 0xf7;
                                     const dataLen = this.tcpBuffer
@@ -298,7 +306,6 @@ export class P2pLayer {
                     throw Error("Unreachable");
             }
         } catch (err) {
-            console.log(data);
             console.error(err);
         }
 
@@ -312,8 +319,19 @@ export class P2pLayer {
                     msg.getData().data
                 );
                 this.arrivedExtensionMessage.push(extensionMsg);
+                const body = extensionMsg.getBody();
+                if (body.type === "status") {
+                    this.genesisHash = body.genesisHash;
+                }
                 console.log(extensionMsg);
                 console.log(extensionMsg.getBody());
+                if (body.type === "response") {
+                    const msg = body.message.getBody();
+
+                    if (msg.type === "headers") {
+                        console.log(msg.data);
+                    }
+                }
                 break;
             }
             case "parcel-propagation": {

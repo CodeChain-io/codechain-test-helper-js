@@ -325,13 +325,6 @@ export class P2pLayer {
                 }
                 console.log(extensionMsg);
                 console.log(extensionMsg.getBody());
-                if (body.type === "response") {
-                    const msg = body.message.getBody();
-
-                    if (msg.type === "headers") {
-                        console.log(msg.data);
-                    }
-                }
                 break;
             }
             case "parcel-propagation": {

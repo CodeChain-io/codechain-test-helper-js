@@ -17,6 +17,10 @@ import { H256 } from "codechain-sdk/lib/core/H256";
 import { U256 } from "codechain-sdk/lib/core/U256";
 
 const RLP = require("rlp");
+const EventEmitter = require("events");
+
+class EVENT extends EventEmitter {}
+export const Emitter = new EVENT();
 
 export enum MessageType {
     MESSAGE_ID_STATUS = 0x01,
@@ -101,6 +105,7 @@ export class BlockSyncMessage {
         const decodedmsg = RLP.decode(bytes);
         const msgId = decodedmsg[0].readUIntBE(0, 1);
         if (msgId === MessageType.MESSAGE_ID_STATUS) {
+            Emitter.emit("status");
             const msg = decodedmsg[1];
             const totalScore = new U256(parseInt(msg[0].toString("hex"), 16));
             const bestHash = new H256(msg[1].toString("hex"));
@@ -221,6 +226,7 @@ export class RequestMessage {
     static decode(protocol: MessageType, bytes: Array<any>): RequestMessage {
         switch (protocol) {
             case MessageType.MESSAGE_ID_GET_HEADERS: {
+                Emitter.emit("headerrequest");
                 return new RequestMessage({
                     type: "headers",
                     startNumber: bytes[0].readUIntBE(0, 1),
@@ -228,6 +234,7 @@ export class RequestMessage {
                 });
             }
             case MessageType.MESSAGE_ID_GET_BODIES: {
+                Emitter.emit("bodyrequest");
                 return new RequestMessage({
                     type: "bodies",
                     data: bytes[0]
@@ -248,12 +255,12 @@ type responseMessageBody = IHeaderss | IBodiess | IStateHeads | IStateChunks;
 
 interface IHeaderss {
     type: "headers";
-    data: Array<Array<Buffer>>;
+    data: Array<Array<any>>;
 }
 
 interface IBodiess {
     type: "bodies";
-    data: Array<Array<Array<Buffer>>>;
+    data: Array<Array<Array<any>>>;
 }
 
 interface IStateHeads {
@@ -321,12 +328,14 @@ export class ResponseMessage {
     static decode(protocol: MessageType, bytes: Array<any>): ResponseMessage {
         switch (protocol) {
             case MessageType.MESSAGE_ID_HEADERS: {
+                Emitter.emit("headerresponse");
                 return new ResponseMessage({
                     type: "headers",
                     data: bytes
                 });
             }
             case MessageType.MESSAGE_ID_GET_BODIES: {
+                Emitter.emit("bodyresponse");
                 return new ResponseMessage({
                     type: "bodies",
                     data: bytes

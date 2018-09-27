@@ -255,12 +255,12 @@ type responseMessageBody = IHeaderss | IBodiess | IStateHeads | IStateChunks;
 
 interface IHeaderss {
     type: "headers";
-    data: Array<Array<any>>;
+    data: Array<Array<Buffer>>;
 }
 
 interface IBodiess {
     type: "bodies";
-    data: Array<Array<Array<any>>>;
+    data: Array<Array<Array<Buffer>>>;
 }
 
 interface IStateHeads {

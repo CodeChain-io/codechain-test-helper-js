@@ -235,10 +235,10 @@ export class Session {
                         )
                         .getPublic();
                     this.secret = new H256(
-                        (this.key.derive(pubKey).toString(16) + "0").slice(
-                            0,
-                            64
-                        )
+                        this.key
+                            .derive(pubKey)
+                            .toString(16)
+                            .padStart(64, "0")
                     );
                     const encodedNonce = this.nonce.rlpBytes();
 

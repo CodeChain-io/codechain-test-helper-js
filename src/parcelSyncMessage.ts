@@ -19,7 +19,7 @@ type parcelSyncMessageBody = IParcels;
 
 interface IParcels {
     type: "parcels";
-    data: Array<Array<any>>;
+    data: Array<Array<Buffer>>;
 }
 
 export class ParcelSyncMessage {

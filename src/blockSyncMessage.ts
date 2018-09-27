@@ -237,7 +237,7 @@ export class RequestMessage {
                 Emitter.emit("bodyrequest");
                 return new RequestMessage({
                     type: "bodies",
-                    data: bytes[0]
+                    data: bytes.map(buf => new H256(buf.toString("hex")))
                 });
             }
             case MessageType.MESSAGE_ID_GET_STATE_HEAD: {

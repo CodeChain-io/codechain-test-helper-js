@@ -1,7 +1,8 @@
 {
   "name": "codechain-test-helper",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "lib/testHelper.js",
+  "typings": "lib/testHelper.d.ts",
   "license": "MIT",
   "scripts": {
     "start": "jest -i",

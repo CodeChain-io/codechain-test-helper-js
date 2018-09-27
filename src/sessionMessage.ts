@@ -100,68 +100,78 @@ export class SessionMessage {
             case MessageType.NODE_ID_REQUEST: {
                 const ip: string = bodyObject
                     .slice(0, 4)
-                    .map((num: any) => num.readUIntBE(0, 1).toString())
+                    .map(
+                        (num: any) =>
+                            num.length === 0
+                                ? 0
+                                : num.readUIntBE(0, 1).toString()
+                    )
                     .join(".");
                 const port: number = bodyObject[4].readUIntBE(0, 1);
                 return new SessionMessage(
-                    version.readUIntBE(0, 1),
-                    seq.readUIntBE(0, 1),
+                    version.length === 0 ? 0 : version.readUIntBE(0, 1),
+                    seq.length === 0 ? 0 : seq.readUIntBE(0, 1),
                     new NodeIdRequest(new NodeId(ip, port))
                 );
             }
             case MessageType.NODE_ID_RESPONSE: {
                 const ip: string = bodyObject
                     .slice(0, 4)
-                    .map((num: any) => num.readUIntBE(0, 1).toString())
+                    .map(
+                        (num: any) =>
+                            num.length === 0
+                                ? 0
+                                : num.readUIntBE(0, 1).toString()
+                    )
                     .join(".");
                 const port: number = bodyObject[4].readUIntBE(0, 1);
                 return new SessionMessage(
-                    version.readUIntBE(0, 1),
-                    seq.readUIntBE(0, 1),
+                    version.length === 0 ? 0 : version.readUIntBE(0, 1),
+                    seq.length === 0 ? 0 : seq.readUIntBE(0, 1),
                     new NodeIdResponse(new NodeId(ip, port))
                 );
             }
             case MessageType.SECRET_REQUEST: {
                 const secret: H512 = new H512(bodyObject.toString("hex"));
                 return new SessionMessage(
-                    version.readUIntBE(0, 1),
-                    seq.readUIntBE(0, 1),
+                    version.length === 0 ? 0 : version.readUIntBE(0, 1),
+                    seq.length === 0 ? 0 : seq.readUIntBE(0, 1),
                     new SecretRequest(secret)
                 );
             }
             case MessageType.SECRET_ALLOWED: {
                 const secret: H512 = new H512(bodyObject.toString("hex"));
                 return new SessionMessage(
-                    version.readUIntBE(0, 1),
-                    seq.readUIntBE(0, 1),
+                    version.length === 0 ? 0 : version.readUIntBE(0, 1),
+                    seq.length === 0 ? 0 : seq.readUIntBE(0, 1),
                     new SecretAllowed(secret)
                 );
             }
             case MessageType.SECRET_DENIED: {
                 return new SessionMessage(
-                    version.readUIntBE(0, 1),
-                    seq.readUIntBE(0, 1),
+                    version.length === 0 ? 0 : version.readUIntBE(0, 1),
+                    seq.length === 0 ? 0 : seq.readUIntBE(0, 1),
                     new SecretDenied(bodyObject.toString())
                 );
             }
             case MessageType.NONCE_REQUEST: {
                 return new SessionMessage(
-                    version.readUIntBE(0, 1),
-                    seq.readUIntBE(0, 1),
+                    version.length === 0 ? 0 : version.readUIntBE(0, 1),
+                    seq.length === 0 ? 0 : seq.readUIntBE(0, 1),
                     new NonceRequest(bodyObject)
                 );
             }
             case MessageType.NONCE_ALLOWED: {
                 return new SessionMessage(
-                    version.readUIntBE(0, 1),
-                    seq.readUIntBE(0, 1),
+                    version.length === 0 ? 0 : version.readUIntBE(0, 1),
+                    seq.length === 0 ? 0 : seq.readUIntBE(0, 1),
                     new NonceAllowed(bodyObject)
                 );
             }
             case MessageType.NONCE_DENIED: {
                 return new SessionMessage(
-                    version.readUIntBE(0, 1),
-                    seq.readUIntBE(0, 1),
+                    version.length === 0 ? 0 : version.readUIntBE(0, 1),
+                    seq.length === 0 ? 0 : seq.readUIntBE(0, 1),
                     new NonceDenied(bodyObject.toString())
                 );
             }

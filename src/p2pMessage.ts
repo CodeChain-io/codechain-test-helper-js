@@ -76,8 +76,10 @@ export class HandshakeMessage {
 
     static fromBytes(bytes: Buffer): HandshakeMessage {
         const decodedbytes = RLP.decode(bytes);
-        const version = decodedbytes[0].readUIntBE(0, 1);
-        const protocolId = decodedbytes[1].readUIntBE(0, 1);
+        const version =
+            decodedbytes[0].length === 0 ? 0 : decodedbytes[0].readUIntBE(0, 1);
+        const protocolId =
+            decodedbytes[1].length === 0 ? 0 : decodedbytes[1].readUIntBE(0, 1);
 
         switch (protocolId) {
             case MessageType.SYNC_ID: {
@@ -180,9 +182,12 @@ export class NegotiationMessage {
 
     static fromBytes(bytes: Buffer): NegotiationMessage {
         const decodedbytes = RLP.decode(bytes);
-        const version = decodedbytes[0].readUIntBE(0, 1);
-        const protocolId = decodedbytes[1].readUIntBE(0, 1);
-        const seq = decodedbytes[2].readUIntBE(0, 1);
+        const version =
+            decodedbytes[0].length === 0 ? 0 : decodedbytes[0].readUIntBE(0, 1);
+        const protocolId =
+            decodedbytes[1].length === 0 ? 0 : decodedbytes[1].readUIntBE(0, 1);
+        const seq =
+            decodedbytes[2].length === 0 ? 0 : decodedbytes[2].readUIntBE(0, 1);
 
         switch (protocolId) {
             case MessageType.REQUEST_ID: {
@@ -198,7 +203,10 @@ export class NegotiationMessage {
             case MessageType.ALLOWED_ID:
                 return new NegotiationMessage(version, seq, {
                     type: "allowed",
-                    version: decodedbytes[COMMON].readUIntBE(0, 1)
+                    version:
+                        decodedbytes[COMMON].length === 0
+                            ? 0
+                            : decodedbytes[COMMON].readUIntBE(0, 1)
                 });
             case MessageType.DENIED_ID:
                 return new NegotiationMessage(version, seq, { type: "denied" });
@@ -301,10 +309,13 @@ export class ExtensionMessage {
         nonce?: H128
     ): ExtensionMessage {
         const decodedbytes = RLP.decode(bytes);
-        const version = decodedbytes[0].readUIntBE(0, 1);
-        const protocolId = decodedbytes[1].readUIntBE(0, 1);
+        const version =
+            decodedbytes[0].length === 0 ? 0 : decodedbytes[0].readUIntBE(0, 1);
+        const protocolId =
+            decodedbytes[1].length === 0 ? 0 : decodedbytes[1].readUIntBE(0, 1);
         const extensionName = decodedbytes[2].toString();
-        const extensionVersion = decodedbytes[3].readUIntBE(0, 1);
+        const extensionVersion =
+            decodedbytes[3].length === 0 ? 0 : decodedbytes[3].readUIntBE(0, 1);
         const data = decodedbytes[4];
 
         switch (protocolId) {
@@ -392,8 +403,8 @@ export class SignedMessage {
         const message = decodedbytes[0];
         // const signature = decodedbytes[1];
 
-        const protocol = RLP.decode(message)[1].readUIntBE(0, 1);
-        switch (protocol) {
+        const protocol = RLP.decode(message)[1];
+        switch (protocol.length === 0 ? 0 : protocol.readUIntBE(0, 1)) {
             case MessageType.SYNC_ID: {
                 const msg = HandshakeMessage.fromBytes(message);
                 return msg;

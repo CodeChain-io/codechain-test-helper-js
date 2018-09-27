@@ -103,7 +103,8 @@ export class BlockSyncMessage {
 
     static fromBytes(bytes: Buffer): BlockSyncMessage {
         const decodedmsg = RLP.decode(bytes);
-        const msgId = decodedmsg[0].readUIntBE(0, 1);
+        const msgId =
+            decodedmsg[0].length === 0 ? 0 : decodedmsg[0].readUIntBE(0, 1);
         if (msgId === MessageType.MESSAGE_ID_STATUS) {
             Emitter.emit("status");
             const msg = decodedmsg[1];
@@ -117,7 +118,8 @@ export class BlockSyncMessage {
                 genesisHash
             });
         } else {
-            const id = decodedmsg[1].readUIntBE(0, 1);
+            const id =
+                decodedmsg[1].length === 0 ? 0 : decodedmsg[1].readUIntBE(0, 1);
             const msg = decodedmsg[2];
             switch (msgId) {
                 case MessageType.MESSAGE_ID_GET_HEADERS:
@@ -229,8 +231,10 @@ export class RequestMessage {
                 Emitter.emit("headerrequest");
                 return new RequestMessage({
                     type: "headers",
-                    startNumber: bytes[0].readUIntBE(0, 1),
-                    maxCount: bytes[1].readUIntBE(0, 1)
+                    startNumber:
+                        bytes[0].length === 0 ? 0 : bytes[0].readUIntBE(0, 1),
+                    maxCount:
+                        bytes[1].length === 0 ? 0 : bytes[1].readUIntBE(0, 1)
                 });
             }
             case MessageType.MESSAGE_ID_GET_BODIES: {

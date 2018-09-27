@@ -39,6 +39,8 @@ export class P2pLayer {
     >;
     private tcpBuffer: Buffer;
     private genesisHash: H256;
+    private recentHeaderNonce: number;
+    private recentBodyNonce: number;
 
     constructor(ip: string, port: number) {
         this.session = new Session(ip, port);
@@ -51,6 +53,8 @@ export class P2pLayer {
         this.genesisHash = new H256(
             "0000000000000000000000000000000000000000000000000000000000000000"
         );
+        this.recentHeaderNonce = 0;
+        this.recentBodyNonce = 0;
     }
 
     getGenesisHash(): H256 {
@@ -59,6 +63,14 @@ export class P2pLayer {
 
     getArrivedExtensionMessage(): Array<BlockSyncMessage | ParcelSyncMessage> {
         return this.arrivedExtensionMessage;
+    }
+
+    getHeaderNonce(): number {
+        return this.recentHeaderNonce;
+    }
+
+    getBodyNonce(): number {
+        return this.recentBodyNonce;
     }
 
     async connect(): Promise<{}> {
@@ -293,7 +305,6 @@ export class P2pLayer {
                 }
                 case MessageType.ENCRYPTED_ID: {
                     console.log("Got ENCRYPTED_ID message");
-                    // I don't think it is the best way to notify type
                     this.onExtensionMessage(msg as ExtensionMessage);
                     break;
                 }
@@ -322,9 +333,18 @@ export class P2pLayer {
                 const body = extensionMsg.getBody();
                 if (body.type === "status") {
                     this.genesisHash = body.genesisHash;
+                } else if (body.type === "request") {
+                    const msg = body.message.getBody();
+                    if (msg.type === "headers")
+                        this.recentHeaderNonce = body.id;
+                    else if (msg.type === "bodies") {
+                        this.recentBodyNonce = body.id;
+                        console.log(msg.data);
+                    }
                 }
                 console.log(extensionMsg);
                 console.log(extensionMsg.getBody());
+
                 break;
             }
             case "parcel-propagation": {

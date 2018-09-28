@@ -23,6 +23,7 @@ import {
     Emitter
 } from "./blockSyncMessage";
 import { ParcelSyncMessage } from "./parcelSyncMessage";
+import { H160 } from "codechain-sdk/lib/core/H160";
 import { H256 } from "codechain-sdk/lib/core/H256";
 import { U256 } from "codechain-sdk/lib/core/U256";
 import { Header } from "./cHeader";
@@ -218,13 +219,13 @@ export class TestHelper {
         const score = bestBlockScore;
         const best = bestBlockHash;
         const genesis = this.p2psocket.getGenesisHash();
-        this.sendStatus(score, best, genesis);
+        await this.sendStatus(score, best, genesis);
 
-        this.sendBlockHeaderResponse(header);
+        await this.sendBlockHeaderResponse(header);
         console.log("Send header response");
 
         await this.waitBodyRequest();
-        this.sendBlockBodyResponse(body);
+        await this.sendBlockBodyResponse(body);
         console.log("Send body response");
     }
 
@@ -234,15 +235,15 @@ export class TestHelper {
         const score = bestBlock.getScore();
         const best = bestBlock.hashing();
         const genesis = this.p2psocket.getGenesisHash();
-        this.sendStatus(score, best, genesis);
+        await this.sendStatus(score, best, genesis);
 
-        this.sendBlockHeaderResponse(
+        await this.sendBlockHeaderResponse(
             header.map(header => header.toEncodeObject())
         );
         console.log("Send header response");
 
         await this.waitBodyRequest();
-        this.sendBlockBodyResponse(
+        await this.sendBlockBodyResponse(
             body.map(parcels => parcels.map(parcel => parcel.toEncodeObject()))
         );
         console.log("Send body response");
@@ -343,5 +344,139 @@ export class TestHelper {
         } catch (error) {
             console.error(error);
         }
+    }
+
+    soloGenesisBlockHeader(): Header {
+        const parentHash = new H256(
+            "0000000000000000000000000000000000000000000000000000000000000000"
+        );
+        const timestamp = 0;
+        const number = 0;
+        const author = new H160("0000000000000000000000000000000000000000");
+        const extraData = Buffer.from([
+            23,
+            108,
+            91,
+            111,
+            253,
+            100,
+            40,
+            143,
+            87,
+            206,
+            189,
+            160,
+            126,
+            135,
+            186,
+            91,
+            4,
+            70,
+            5,
+            195,
+            246,
+            153,
+            51,
+            67,
+            233,
+            113,
+            143,
+            161,
+            0,
+            209,
+            115,
+            124
+        ]);
+        const parcelsRoot = new H256(
+            "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
+        );
+        const stateRoot = new H256(
+            "2f6b19afc38f6f1464af20dde08d8bebd6a6aec0a95aaf7ef2fb729c3b88dc5b"
+        );
+        const invoicesRoot = new H256(
+            "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
+        );
+        const score = new U256(131072);
+        const seal: any[] = [];
+        const header = new Header(
+            parentHash,
+            timestamp,
+            number,
+            author,
+            extraData,
+            parcelsRoot,
+            stateRoot,
+            invoicesRoot,
+            score,
+            seal
+        );
+
+        return header;
+    }
+
+    soloBlock1(parent: H256): Header {
+        const parentHash = parent;
+        const timestamp = 1537509963;
+        const number = 1;
+        const author = new H160("7777777777777777777777777777777777777777");
+        const extraData = Buffer.alloc(0);
+        const parcelsRoot = new H256(
+            "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
+        );
+        const stateRoot = new H256(
+            "2f6b19afc38f6f1464af20dde08d8bebd6a6aec0a95aaf7ef2fb729c3b88dc5b"
+        );
+        const invoicesRoot = new H256(
+            "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
+        );
+        const score = new U256(999999999999999);
+        const seal: any[] = [];
+        const header = new Header(
+            parentHash,
+            timestamp,
+            number,
+            author,
+            extraData,
+            parcelsRoot,
+            stateRoot,
+            invoicesRoot,
+            score,
+            seal
+        );
+
+        return header;
+    }
+
+    soloBlock2(parent: H256): Header {
+        const parentHash = parent;
+        const timestamp = 1537944287;
+        const number = 2;
+        const author = new H160("6666666666666666666666666666666666666666");
+        const extraData = Buffer.alloc(0);
+        const parcelsRoot = new H256(
+            "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
+        );
+        const stateRoot = new H256(
+            "2f6b19afc38f6f1464af20dde08d8bebd6a6aec0a95aaf7ef2fb729c3b88dc5b"
+        );
+        const invoicesRoot = new H256(
+            "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
+        );
+        const score = new U256(999999999999999);
+        const seal: any[] = [];
+        const header = new Header(
+            parentHash,
+            timestamp,
+            number,
+            author,
+            extraData,
+            parcelsRoot,
+            stateRoot,
+            invoicesRoot,
+            score,
+            seal
+        );
+
+        return header;
     }
 }

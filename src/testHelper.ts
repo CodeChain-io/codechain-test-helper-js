@@ -69,6 +69,10 @@ export class TestHelper {
         console.log("Connected\n");
     }
 
+    async end() {
+        await this.p2psocket.close();
+    }
+
     // Get block headers from the most recent header response
     getBlockHeaderResponse(): EncodedHeaders | null {
         for (const msg of this.p2psocket
@@ -246,12 +250,12 @@ export class TestHelper {
 
     async sendEncodedParcel(parcels: EncodedParcels) {
         console.log("Send parcels");
-        this.sendParcelSyncMessage(parcels);
+        await this.sendParcelSyncMessage(parcels);
     }
 
     async sendParcel(parcels: Array<SignedParcel>) {
         console.log("Sned parcels");
-        this.sendParcelSyncMessage(
+        await this.sendParcelSyncMessage(
             parcels.map(parcel => parcel.toEncodeObject())
         );
     }

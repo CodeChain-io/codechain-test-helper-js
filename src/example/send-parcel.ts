@@ -23,6 +23,8 @@ async function sendParcel() {
         nonce: 0
     });
 
-    TH.sendEncodedParcel([signedparcel.toEncodeObject()]);
+    await TH.sendEncodedParcel([signedparcel.toEncodeObject()]);
+
+    await TH.end();
 }
 sendParcel();

@@ -267,6 +267,7 @@ export class Session {
                             rinfo.port
                         }`
                     );
+                    this.socket.close();
                     throw Error(sessionMsg.getBody().getItem());
                 }
                 case MessageType.NONCE_ALLOWED: {
@@ -307,6 +308,7 @@ export class Session {
                             rinfo.port
                         }`
                     );
+                    this.socket.close();
                     throw Error(sessionMsg.getBody().getItem());
                 }
                 default: {

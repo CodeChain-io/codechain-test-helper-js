@@ -148,6 +148,8 @@ async function sendBlock() {
         hash2,
         score2
     );
+
+    await TH.end();
 }
 
 sendBlock();

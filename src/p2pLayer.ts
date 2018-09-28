@@ -359,4 +359,8 @@ export class P2pLayer {
                 throw Error("Not implemented");
         }
     }
+
+    async close() {
+        await this.socket.end();
+    }
 }

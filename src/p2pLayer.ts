@@ -41,6 +41,7 @@ export class P2pLayer {
     private genesisHash: H256;
     private recentHeaderNonce: number;
     private recentBodyNonce: number;
+    private log: boolean;
 
     constructor(ip: string, port: number) {
         this.session = new Session(ip, port);
@@ -55,6 +56,12 @@ export class P2pLayer {
         );
         this.recentHeaderNonce = 0;
         this.recentBodyNonce = 0;
+        this.log = false;
+    }
+
+    setLog() {
+        this.log = true;
+        this.session.setLog();
     }
 
     getGenesisHash(): H256 {
@@ -85,17 +92,19 @@ export class P2pLayer {
             this.socket.connect(
                 { port: this.port, host: this.ip },
                 () => {
-                    console.log("Start TCP connection");
-                    console.log(
-                        "   local = %s:%s",
-                        this.socket.localAddress,
-                        this.socket.localPort
-                    );
-                    console.log(
-                        "   remote = %s:%s",
-                        this.socket.remoteAddress,
-                        this.socket.remotePort
-                    );
+                    if (this.log) console.log("Start TCP connection");
+                    if (this.log)
+                        console.log(
+                            "   local = %s:%s",
+                            this.socket.localAddress,
+                            this.socket.localPort
+                        );
+                    if (this.log)
+                        console.log(
+                            "   remote = %s:%s",
+                            this.socket.remoteAddress,
+                            this.socket.remotePort
+                        );
                     this.sendP2pMessage(MessageType.SYNC_ID);
 
                     this.socket.on("data", (data: Buffer) => {
@@ -163,13 +172,14 @@ export class P2pLayer {
                         }
                     });
                     this.socket.on("end", () => {
-                        console.log("TCP disconnected");
+                        if (this.log) console.log("TCP disconnected");
                     });
                     this.socket.on("error", (err: any) => {
-                        console.log("Socket Error: ", JSON.stringify(err));
+                        if (this.log)
+                            console.log("Socket Error: ", JSON.stringify(err));
                     });
                     this.socket.on("close", () => {
-                        console.log("Socket Closed");
+                        if (this.log) console.log("Socket Closed");
                     });
                 }
             );
@@ -179,7 +189,7 @@ export class P2pLayer {
     private sendP2pMessage(messageType: MessageType): void {
         switch (messageType) {
             case MessageType.SYNC_ID: {
-                console.log("Send SYNC_ID Message");
+                if (this.log) console.log("Send SYNC_ID Message");
                 const nodeId = new NodeId(this.socket.localAddress, PORT);
                 const msg = new HandshakeMessage({
                     type: "sync",
@@ -195,7 +205,7 @@ export class P2pLayer {
                 break;
             }
             case MessageType.REQUEST_ID: {
-                console.log("Send REQUEST_ID Message");
+                if (this.log) console.log("Send REQUEST_ID Message");
                 const extensionName = [
                     "block-propagation",
                     "parcel-propagation"
@@ -281,35 +291,35 @@ export class P2pLayer {
 
             switch (msg.protocolId()) {
                 case MessageType.SYNC_ID: {
-                    console.log("Got SYNC_ID message");
+                    if (this.log) console.log("Got SYNC_ID message");
                     break;
                 }
                 case MessageType.ACK_ID: {
-                    console.log("Got ACK_ID message");
+                    if (this.log) console.log("Got ACK_ID message");
                     this.sendP2pMessage(MessageType.REQUEST_ID);
                     break;
                 }
                 case MessageType.REQUEST_ID: {
-                    console.log("Got REQUEST_ID message");
+                    if (this.log) console.log("Got REQUEST_ID message");
                     break;
                 }
                 case MessageType.ALLOWED_ID: {
-                    console.log("Got ALLOWED_ID message");
+                    if (this.log) console.log("Got ALLOWED_ID message");
                     if (this.allowedFinish) return true;
                     this.allowedFinish = true;
                     break;
                 }
                 case MessageType.DENIED_ID: {
-                    console.log("Got DENIED_ID message");
+                    if (this.log) console.log("Got DENIED_ID message");
                     break;
                 }
                 case MessageType.ENCRYPTED_ID: {
-                    console.log("Got ENCRYPTED_ID message");
+                    if (this.log) console.log("Got ENCRYPTED_ID message");
                     this.onExtensionMessage(msg as ExtensionMessage);
                     break;
                 }
                 case MessageType.UNENCRYPTED_ID: {
-                    console.log("Got UNENCRYPTED_ID message");
+                    if (this.log) console.log("Got UNENCRYPTED_ID message");
                     this.onExtensionMessage(msg as ExtensionMessage);
                     break;
                 }
@@ -339,11 +349,11 @@ export class P2pLayer {
                         this.recentHeaderNonce = body.id;
                     else if (msg.type === "bodies") {
                         this.recentBodyNonce = body.id;
-                        console.log(msg.data);
+                        if (this.log) console.log(msg.data);
                     }
                 }
-                console.log(extensionMsg);
-                console.log(extensionMsg.getBody());
+                if (this.log) console.log(extensionMsg);
+                if (this.log) console.log(extensionMsg.getBody());
 
                 break;
             }
@@ -352,7 +362,7 @@ export class P2pLayer {
                     msg.getData().data
                 );
                 this.arrivedExtensionMessage.push(extensionMsg);
-                console.log(extensionMsg);
+                if (this.log) console.log(extensionMsg);
                 break;
             }
             default:

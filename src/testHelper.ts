@@ -35,9 +35,16 @@ type EncodedBodies = Array<Array<Array<Buffer>>>;
 
 export class TestHelper {
     private p2psocket: P2pLayer;
+    private log: boolean;
 
     constructor(ip: string, port: number) {
         this.p2psocket = new P2pLayer(ip, port);
+        this.log = false;
+    }
+
+    setLog() {
+        this.log = true;
+        this.p2psocket.setLog();
     }
 
     async establish(bestHash?: H256, bestScore?: U256) {
@@ -67,7 +74,7 @@ export class TestHelper {
 
         await this.waitHeaderRequest();
 
-        console.log("Connected\n");
+        if (this.log) console.log("Connected\n");
     }
 
     async end() {
@@ -215,22 +222,22 @@ export class TestHelper {
         bestBlockHash: H256,
         bestBlockScore: U256
     ) {
-        console.log("Send blocks");
+        if (this.log) console.log("Send blocks");
         const score = bestBlockScore;
         const best = bestBlockHash;
         const genesis = this.p2psocket.getGenesisHash();
         await this.sendStatus(score, best, genesis);
 
         await this.sendBlockHeaderResponse(header);
-        console.log("Send header response");
+        if (this.log) console.log("Send header response");
 
         await this.waitBodyRequest();
         await this.sendBlockBodyResponse(body);
-        console.log("Send body response");
+        if (this.log) console.log("Send body response");
     }
 
     async sendBlock(header: Array<Header>, body: Array<Array<SignedParcel>>) {
-        console.log("Send blocks");
+        if (this.log) console.log("Send blocks");
         const bestBlock = header[header.length - 1];
         const score = bestBlock.getScore();
         const best = bestBlock.hashing();
@@ -240,22 +247,22 @@ export class TestHelper {
         await this.sendBlockHeaderResponse(
             header.map(header => header.toEncodeObject())
         );
-        console.log("Send header response");
+        if (this.log) console.log("Send header response");
 
         await this.waitBodyRequest();
         await this.sendBlockBodyResponse(
             body.map(parcels => parcels.map(parcel => parcel.toEncodeObject()))
         );
-        console.log("Send body response");
+        if (this.log) console.log("Send body response");
     }
 
     async sendEncodedParcel(parcels: EncodedParcels) {
-        console.log("Send parcels");
+        if (this.log) console.log("Send parcels");
         await this.sendParcelSyncMessage(parcels);
     }
 
     async sendParcel(parcels: Array<SignedParcel>) {
-        console.log("Sned parcels");
+        if (this.log) console.log("Sned parcels");
         await this.sendParcelSyncMessage(
             parcels.map(parcel => parcel.toEncodeObject())
         );

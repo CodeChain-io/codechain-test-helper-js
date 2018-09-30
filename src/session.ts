@@ -52,6 +52,7 @@ export class Session {
     private encodedSecret: null | Buffer;
     private targetNonce: H128;
     private targetPubkey: null | H512;
+    private log: boolean;
 
     constructor(ip: string, port: number) {
         this.targetIp = ip;
@@ -62,6 +63,11 @@ export class Session {
         this.targetNonce = new H128("0x00000000000000000000000000000000");
         this.targetPubkey = null;
         this.encodedSecret = null;
+        this.log = false;
+    }
+
+    setLog() {
+        this.log = true;
     }
 
     setIp(ip: string) {
@@ -122,12 +128,12 @@ export class Session {
 
     async connect(): Promise<{}> {
         return new Promise((resolve, reject) => {
-            console.log("Start connecting");
+            if (this.log) console.log("Start connecting");
             try {
                 this.socket = DGRAM.createSocket("udp4");
 
                 this.socket.on("error", (err: any) => {
-                    console.log(`server error:\n${err.stack}`);
+                    if (this.log) console.log(`server error:\n${err.stack}`);
                     this.socket.close();
                     reject(err);
                 });
@@ -136,12 +142,13 @@ export class Session {
                     this.socket.setRecvBufferSize(MAX_PACKET_SIZE);
                     this.socket.setSendBufferSize(MAX_PACKET_SIZE);
                     const address = this.socket.address();
-                    console.log(
-                        "UDP Server listening on " +
-                            address.address +
-                            ":" +
-                            address.port
-                    );
+                    if (this.log)
+                        console.log(
+                            "UDP Server listening on " +
+                                address.address +
+                                ":" +
+                                address.port
+                        );
                     try {
                         this.sendSessionMessage(MessageType.NODE_ID_REQUEST);
                     } catch (err) {
@@ -166,12 +173,12 @@ export class Session {
 
     async listen(): Promise<{}> {
         return new Promise((resolve, reject) => {
-            console.log("Start listening");
+            if (this.log) console.log("Start listening");
             try {
                 this.socket = DGRAM.createSocket("udp4");
 
                 this.socket.on("error", (err: any) => {
-                    console.log(`server error:\n${err.stack}`);
+                    if (this.log) console.log(`server error:\n${err.stack}`);
                     this.socket.close();
                     reject(err);
                 });
@@ -180,12 +187,13 @@ export class Session {
                     this.socket.setRecvBufferSize(MAX_PACKET_SIZE);
                     this.socket.setSendBufferSize(MAX_PACKET_SIZE);
                     const address = this.socket.address();
-                    console.log(
-                        "UDP Server listening on " +
-                            address.address +
-                            ":" +
-                            address.port
-                    );
+                    if (this.log)
+                        console.log(
+                            "UDP Server listening on " +
+                                address.address +
+                                ":" +
+                                address.port
+                        );
                 });
 
                 this.socket.on("message", async (msg: any, rinfo: any) => {
@@ -206,22 +214,24 @@ export class Session {
             const sessionMsg = SessionMessage.fromBytes(msg);
             switch (sessionMsg.getBody().protocolId()) {
                 case MessageType.NODE_ID_RESPONSE: {
-                    console.log(
-                        `Received: NODE_ID_RESPONSE from ${rinfo.address}:${
-                            rinfo.port
-                        }`
-                    );
+                    if (this.log)
+                        console.log(
+                            `Received: NODE_ID_RESPONSE from ${rinfo.address}:${
+                                rinfo.port
+                            }`
+                        );
                     this.key = ec.genKeyPair();
                     this.sendSessionMessage(MessageType.SECRET_REQUEST);
 
                     break;
                 }
                 case MessageType.SECRET_ALLOWED: {
-                    console.log(
-                        `Received: SECRET_ALLOWED from ${rinfo.address}:${
-                            rinfo.port
-                        }`
-                    );
+                    if (this.log)
+                        console.log(
+                            `Received: SECRET_ALLOWED from ${rinfo.address}:${
+                                rinfo.port
+                            }`
+                        );
                     this.targetPubkey = sessionMsg.getBody().getItem();
                     if (this.targetPubkey == null) {
                         throw Error("The key is not defined");
@@ -262,20 +272,22 @@ export class Session {
                     break;
                 }
                 case MessageType.SECRET_DENIED: {
-                    console.log(
-                        `Received: SECRET_DENIED from ${rinfo.address}:${
-                            rinfo.port
-                        }`
-                    );
+                    if (this.log)
+                        console.log(
+                            `Received: SECRET_DENIED from ${rinfo.address}:${
+                                rinfo.port
+                            }`
+                        );
                     this.socket.close();
                     throw Error(sessionMsg.getBody().getItem());
                 }
                 case MessageType.NONCE_ALLOWED: {
-                    console.log(
-                        `Received: NONCE_ALLOWED from ${rinfo.address}:${
-                            rinfo.port
-                        }`
-                    );
+                    if (this.log)
+                        console.log(
+                            `Received: NONCE_ALLOWED from ${rinfo.address}:${
+                                rinfo.port
+                            }`
+                        );
 
                     const iv = new Buffer(
                         this.nonce.toEncodeObject().slice(2),
@@ -303,11 +315,12 @@ export class Session {
                     return true;
                 }
                 case MessageType.NONCE_DENIED: {
-                    console.log(
-                        `Received: NONCE_DENIED from ${rinfo.address}:${
-                            rinfo.port
-                        }`
-                    );
+                    if (this.log)
+                        console.log(
+                            `Received: NONCE_DENIED from ${rinfo.address}:${
+                                rinfo.port
+                            }`
+                        );
                     this.socket.close();
                     throw Error(sessionMsg.getBody().getItem());
                 }
@@ -327,33 +340,36 @@ export class Session {
             const sessionMsg = SessionMessage.fromBytes(msg);
             switch (sessionMsg.getBody().protocolId()) {
                 case MessageType.NODE_ID_REQUEST: {
-                    console.log(
-                        `Received: NODE_ID_REQUEST from ${rinfo.address}:${
-                            rinfo.port
-                        }`
-                    );
+                    if (this.log)
+                        console.log(
+                            `Received: NODE_ID_REQUEST from ${rinfo.address}:${
+                                rinfo.port
+                            }`
+                        );
                     this.setIp(rinfo.address);
                     this.setPort(rinfo.port);
                     this.sendSessionMessage(MessageType.NODE_ID_RESPONSE);
                     break;
                 }
                 case MessageType.SECRET_REQUEST: {
-                    console.log(
-                        `Received: SECRET_REQUEST from ${rinfo.address}:${
-                            rinfo.port
-                        }`
-                    );
+                    if (this.log)
+                        console.log(
+                            `Received: SECRET_REQUEST from ${rinfo.address}:${
+                                rinfo.port
+                            }`
+                        );
                     this.targetPubkey = sessionMsg.getBody().getItem();
                     this.key = ec.genKeyPair();
                     this.sendSessionMessage(MessageType.SECRET_ALLOWED);
                     break;
                 }
                 case MessageType.NONCE_REQUEST: {
-                    console.log(
-                        `Received: NONCE_REQUEST from ${rinfo.address}:${
-                            rinfo.port
-                        }`
-                    );
+                    if (this.log)
+                        console.log(
+                            `Received: NONCE_REQUEST from ${rinfo.address}:${
+                                rinfo.port
+                            }`
+                        );
                     if (this.targetPubkey == null) {
                         throw Error("The key is not defined");
                     }
@@ -422,7 +438,7 @@ export class Session {
     private async sendSessionMessage(messageType: MessageType): Promise<void> {
         switch (messageType) {
             case MessageType.NODE_ID_REQUEST: {
-                console.log("Send NODE_ID_REQUEST");
+                if (this.log) console.log("Send NODE_ID_REQUEST");
                 const message = new SessionMessage(
                     0,
                     0,
@@ -438,7 +454,7 @@ export class Session {
                 break;
             }
             case MessageType.NODE_ID_RESPONSE: {
-                console.log("Send NODE_ID_RESPONSE");
+                if (this.log) console.log("Send NODE_ID_RESPONSE");
                 const message = new SessionMessage(
                     0,
                     0,
@@ -454,7 +470,7 @@ export class Session {
                 break;
             }
             case MessageType.SECRET_REQUEST: {
-                console.log("Send SECRET_REQUESTE");
+                if (this.log) console.log("Send SECRET_REQUESTE");
                 if (this.key == null) {
                     throw Error("The key is not defined");
                 }
@@ -478,7 +494,7 @@ export class Session {
                 break;
             }
             case MessageType.SECRET_ALLOWED: {
-                console.log("Send SECRET_ALLOWED");
+                if (this.log) console.log("Send SECRET_ALLOWED");
                 if (this.key == null) {
                     throw Error("Secret key is not defined");
                 }
@@ -502,7 +518,7 @@ export class Session {
                 break;
             }
             case MessageType.SECRET_DENIED: {
-                console.log("Send SECRET_DENIED");
+                if (this.log) console.log("Send SECRET_DENIED");
                 const message = new SessionMessage(
                     0,
                     0,
@@ -516,7 +532,7 @@ export class Session {
                 break;
             }
             case MessageType.NONCE_REQUEST: {
-                console.log("Send NONCE_REQUEST");
+                if (this.log) console.log("Send NONCE_REQUEST");
                 if (this.encodedSecret == null) {
                     throw Error("Secret is not maded");
                 }
@@ -533,7 +549,7 @@ export class Session {
                 break;
             }
             case MessageType.NONCE_ALLOWED: {
-                console.log("Send NONCE_ALLOWED");
+                if (this.log) console.log("Send NONCE_ALLOWED");
                 if (this.encodedSecret == null) {
                     throw Error("Secret is not maded");
                 }
@@ -550,7 +566,7 @@ export class Session {
                 break;
             }
             case MessageType.NONCE_DENIED: {
-                console.log("Send NONCE_DENIED");
+                if (this.log) console.log("Send NONCE_DENIED");
                 const message = new SessionMessage(
                     0,
                     0,

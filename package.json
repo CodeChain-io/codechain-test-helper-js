@@ -15,7 +15,7 @@
   "dependencies": {
     "@types/crypto-js": "^3.1.43",
     "blakejs": "^1.1.0",
-    "codechain-sdk": "0.2.0-alpha.2",
+    "codechain-sdk": "^0.2.0-alpha.2",
     "crypto": "^1.0.1",
     "dgram": "^1.0.1",
     "elliptic": "^6.4.1",

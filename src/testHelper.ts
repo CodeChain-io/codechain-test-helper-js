@@ -262,7 +262,7 @@ export class TestHelper {
     }
 
     async sendParcel(parcels: Array<SignedParcel>) {
-        if (this.log) console.log("Sned parcels");
+        if (this.log) console.log("Send parcels");
         await this.sendParcelSyncMessage(
             parcels.map(parcel => parcel.toEncodeObject())
         );

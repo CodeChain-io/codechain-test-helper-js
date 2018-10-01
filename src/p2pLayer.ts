@@ -25,6 +25,7 @@ import { NodeId } from "./sessionMessage";
 import { BlockSyncMessage } from "./blockSyncMessage";
 import { ParcelSyncMessage } from "./parcelSyncMessage";
 import { H256 } from "codechain-sdk/lib/core/H256";
+import { U256 } from "codechain-sdk/lib/core/U256";
 
 const NET = require("net");
 
@@ -39,8 +40,8 @@ export class P2pLayer {
     >;
     private tcpBuffer: Buffer;
     private genesisHash: H256;
-    private recentHeaderNonce: number;
-    private recentBodyNonce: number;
+    private recentHeaderNonce: U256;
+    private recentBodyNonce: U256;
     private log: boolean;
 
     constructor(ip: string, port: number) {
@@ -54,8 +55,8 @@ export class P2pLayer {
         this.genesisHash = new H256(
             "0000000000000000000000000000000000000000000000000000000000000000"
         );
-        this.recentHeaderNonce = 0;
-        this.recentBodyNonce = 0;
+        this.recentHeaderNonce = new U256(0);
+        this.recentBodyNonce = new U256(0);
         this.log = false;
     }
 
@@ -72,11 +73,11 @@ export class P2pLayer {
         return this.arrivedExtensionMessage;
     }
 
-    getHeaderNonce(): number {
+    getHeaderNonce(): U256 {
         return this.recentHeaderNonce;
     }
 
-    getBodyNonce(): number {
+    getBodyNonce(): U256 {
         return this.recentBodyNonce;
     }
 
@@ -196,7 +197,7 @@ export class P2pLayer {
                 );
                 const msg = new HandshakeMessage({
                     type: "sync",
-                    version: 0,
+                    version: new U256(0),
                     port: this.session.getPort(),
                     nodeId
                 });
@@ -213,10 +214,10 @@ export class P2pLayer {
                     "block-propagation",
                     "parcel-propagation"
                 ];
-                let msg = new NegotiationMessage(0, 0, {
+                let msg = new NegotiationMessage(new U256(0), new U256(0), {
                     type: "request",
                     extensionName: extensionName[0],
-                    extensionVersion: [0]
+                    extensionVersion: [new U256(0)]
                 });
                 let signedMsg = new SignedMessage(
                     msg,
@@ -224,10 +225,10 @@ export class P2pLayer {
                 );
                 this.writeData(signedMsg.rlpBytes());
 
-                msg = new NegotiationMessage(0, 1, {
+                msg = new NegotiationMessage(new U256(0), new U256(1), {
                     type: "request",
                     extensionName: extensionName[1],
-                    extensionVersion: [0]
+                    extensionVersion: [new U256(0)]
                 });
                 signedMsg = new SignedMessage(
                     msg,
@@ -243,7 +244,7 @@ export class P2pLayer {
 
     async sendExtensionMessage(
         extensionName: string,
-        extensionVersion: number,
+        extensionVersion: U256,
         data: Buffer,
         needEncryption: boolean
     ) {
@@ -252,7 +253,7 @@ export class P2pLayer {
         let msg;
         if (needEncryption) {
             msg = new ExtensionMessage(
-                0,
+                new U256(0),
                 extensionName,
                 extensionVersion,
                 { type: "encrypted", data },
@@ -261,7 +262,7 @@ export class P2pLayer {
             );
         } else {
             msg = new ExtensionMessage(
-                0,
+                new U256(0),
                 extensionName,
                 extensionVersion,
                 { type: "unencrypted", data },

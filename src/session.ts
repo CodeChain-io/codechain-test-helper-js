@@ -15,6 +15,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { H128 } from "codechain-sdk/lib/core/H128";
+import { U256 } from "codechain-primitives/lib";
 import { H512 } from "codechain-sdk/lib/core/H512";
 import { H256 } from "codechain-sdk/lib/core/H256";
 import {
@@ -430,7 +431,7 @@ export class Session {
                 if (this.log) console.log("Send NODE_ID_REQUEST");
                 const message = new SessionMessage(
                     0,
-                    0,
+                    new U256(0),
                     new NodeIdRequest(
                         new NodeId(this.targetIp, this.targetPort)
                     )
@@ -446,7 +447,7 @@ export class Session {
                 if (this.log) console.log("Send NODE_ID_RESPONSE");
                 const message = new SessionMessage(
                     0,
-                    0,
+                    new U256(0),
                     new NodeIdResponse(
                         new NodeId(this.targetIp, this.targetPort)
                     )
@@ -465,7 +466,7 @@ export class Session {
                 }
                 const message = new SessionMessage(
                     0,
-                    0,
+                    new U256(0),
                     new SecretRequest(
                         new H512(
                             this.key
@@ -489,7 +490,7 @@ export class Session {
                 }
                 const message = new SessionMessage(
                     0,
-                    0,
+                    new U256(0),
                     new SecretAllowed(
                         new H512(
                             this.key
@@ -510,7 +511,7 @@ export class Session {
                 if (this.log) console.log("Send SECRET_DENIED");
                 const message = new SessionMessage(
                     0,
-                    0,
+                    new U256(0),
                     new SecretDenied("Secret key request is denied")
                 );
                 await this.socket.send(
@@ -527,7 +528,7 @@ export class Session {
                 }
                 const message = new SessionMessage(
                     0,
-                    0,
+                    new U256(0),
                     new NonceRequest(this.encodedSecret)
                 );
                 await this.socket.send(
@@ -544,7 +545,7 @@ export class Session {
                 }
                 const message = new SessionMessage(
                     0,
-                    0,
+                    new U256(0),
                     new NonceAllowed(this.encodedSecret)
                 );
                 await this.socket.send(
@@ -558,7 +559,7 @@ export class Session {
                 if (this.log) console.log("Send NONCE_DENIED");
                 const message = new SessionMessage(
                     0,
-                    0,
+                    new U256(0),
                     new NonceDenied("Nonce request is denied")
                 );
                 await this.socket.send(

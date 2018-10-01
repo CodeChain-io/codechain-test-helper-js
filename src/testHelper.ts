@@ -167,7 +167,7 @@ export class TestHelper {
         });
         await this.p2psocket.sendExtensionMessage(
             "block-propagation",
-            0,
+            new U256(0),
             msg.rlpBytes(),
             false
         );
@@ -182,7 +182,7 @@ export class TestHelper {
         });
         await this.p2psocket.sendExtensionMessage(
             "block-propagation",
-            0,
+            new U256(0),
             msg.rlpBytes(),
             false
         );
@@ -197,7 +197,7 @@ export class TestHelper {
         });
         await this.p2psocket.sendExtensionMessage(
             "block-propagation",
-            0,
+            new U256(0),
             msg.rlpBytes(),
             false
         );
@@ -210,7 +210,7 @@ export class TestHelper {
         });
         await this.p2psocket.sendExtensionMessage(
             "parcel-propagation",
-            0,
+            new U256(0),
             message.rlpBytes(),
             false
         );
@@ -357,8 +357,8 @@ export class TestHelper {
         const parentHash = new H256(
             "0000000000000000000000000000000000000000000000000000000000000000"
         );
-        const timestamp = 0;
-        const number = 0;
+        const timestamp = new U256(0);
+        const number = new U256(0);
         const author = new H160("0000000000000000000000000000000000000000");
         const extraData = Buffer.from([
             23,
@@ -423,8 +423,8 @@ export class TestHelper {
 
     soloBlock1(parent: H256): Header {
         const parentHash = parent;
-        const timestamp = 1537509963;
-        const number = 1;
+        const timestamp = new U256(1537509963);
+        const number = new U256(1);
         const author = new H160("7777777777777777777777777777777777777777");
         const extraData = Buffer.alloc(0);
         const parcelsRoot = new H256(
@@ -456,8 +456,8 @@ export class TestHelper {
 
     soloBlock2(parent: H256): Header {
         const parentHash = parent;
-        const timestamp = 1537944287;
-        const number = 2;
+        const timestamp = new U256(1537944287);
+        const number = new U256(2);
         const author = new H160("6666666666666666666666666666666666666666");
         const extraData = Buffer.alloc(0);
         const parcelsRoot = new H256(

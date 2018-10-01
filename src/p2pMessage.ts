@@ -15,6 +15,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { NodeId } from "./sessionMessage";
 import { H256 } from "codechain-sdk/lib/core/H256";
+import { U256 } from "codechain-sdk/lib/core/U256";
 import { H128 } from "codechain-sdk/lib/core/H128";
 import { blake256WithKey } from "codechain-sdk/lib/utils";
 
@@ -56,14 +57,14 @@ export class HandshakeMessage {
         switch (this.body.type) {
             case "sync": {
                 return [
-                    this.body.version,
+                    this.body.version.toEncodeObject(),
                     this.protocolId(),
                     this.body.port,
                     this.body.nodeId.toEncodeObject()
                 ];
             }
             case "ack": {
-                return [this.body.version, this.protocolId()];
+                return [this.body.version.toEncodeObject(), this.protocolId()];
             }
             default:
                 throw Error("Unreachable");
@@ -77,7 +78,9 @@ export class HandshakeMessage {
     static fromBytes(bytes: Buffer): HandshakeMessage {
         const decodedbytes = RLP.decode(bytes);
         const version =
-            decodedbytes[0].length === 0 ? 0 : decodedbytes[0].readUIntBE(0, 1);
+            decodedbytes[0].length === 0
+                ? new U256(0)
+                : new U256(parseInt(decodedbytes[0].toString("hes"), 16));
         const protocolId =
             decodedbytes[1].length === 0 ? 0 : decodedbytes[1].readUIntBE(0, 1);
 
@@ -103,24 +106,24 @@ type HandshakeBody = HandshakeSync | HandshakeAck;
 
 interface HandshakeSync {
     type: "sync";
-    version: number;
+    version: U256;
     port: number;
     nodeId: NodeId;
 }
 
 interface HandshakeAck {
     type: "ack";
-    version: number;
+    version: U256;
 }
 
 const COMMON = 3;
 
 export class NegotiationMessage {
-    private version: number;
-    private seq: number;
+    private version: U256;
+    private seq: U256;
     private body: NegotiationBody;
 
-    constructor(version: number, seq: number, body: NegotiationBody) {
+    constructor(version: U256, seq: U256, body: NegotiationBody) {
         this.version = version;
         this.seq = seq;
         this.body = body;
@@ -156,21 +159,27 @@ export class NegotiationMessage {
         switch (this.body.type) {
             case "request":
                 return [
-                    this.version,
+                    this.version.toEncodeObject(),
                     this.protocolId(),
-                    this.seq,
+                    this.seq.toEncodeObject(),
                     this.body.extensionName,
-                    this.body.extensionVersion
+                    this.body.extensionVersion.map(version =>
+                        version.toEncodeObject()
+                    )
                 ];
             case "allowed":
                 return [
-                    this.version,
+                    this.version.toEncodeObject(),
                     this.protocolId(),
-                    this.seq,
-                    this.body.version
+                    this.seq.toEncodeObject(),
+                    this.body.version.toEncodeObject()
                 ];
             case "denied":
-                return [this.version, this.protocolId(), this.seq];
+                return [
+                    this.version.toEncodeObject(),
+                    this.protocolId(),
+                    this.seq.toEncodeObject()
+                ];
             default:
                 throw Error("Unreachable");
         }
@@ -183,11 +192,15 @@ export class NegotiationMessage {
     static fromBytes(bytes: Buffer): NegotiationMessage {
         const decodedbytes = RLP.decode(bytes);
         const version =
-            decodedbytes[0].length === 0 ? 0 : decodedbytes[0].readUIntBE(0, 1);
+            decodedbytes[0].length === 0
+                ? new U256(0)
+                : new U256(parseInt(decodedbytes[0].toString("hex"), 16));
         const protocolId =
             decodedbytes[1].length === 0 ? 0 : decodedbytes[1].readUIntBE(0, 1);
         const seq =
-            decodedbytes[2].length === 0 ? 0 : decodedbytes[2].readUIntBE(0, 1);
+            decodedbytes[2].length === 0
+                ? new U256(0)
+                : new U256(parseInt(decodedbytes[2].toString("hex"), 16));
 
         switch (protocolId) {
             case MessageType.REQUEST_ID: {
@@ -197,6 +210,7 @@ export class NegotiationMessage {
                 return new NegotiationMessage(version, seq, {
                     type: "request",
                     extensionName,
+                    // FIX ME: parse U256 array properly
                     extensionVersion
                 });
             }
@@ -224,12 +238,12 @@ type NegotiationBody =
 interface INegotiationRequest {
     type: "request";
     extensionName: string;
-    extensionVersion: Array<number>;
+    extensionVersion: Array<U256>;
 }
 
 interface INegotiationAllowed {
     type: "allowed";
-    version: number;
+    version: U256;
 }
 
 interface INegotiationDenied {
@@ -237,15 +251,15 @@ interface INegotiationDenied {
 }
 
 export class ExtensionMessage {
-    private version: number;
+    private version: U256;
     private extensionName: string;
-    private extensionVersion: number;
+    private extensionVersion: U256;
     private data: IData;
 
     constructor(
-        version: number,
+        version: U256,
         extensionName: string,
-        extensionVersion: number,
+        extensionVersion: U256,
         data: IData,
         secret?: H256,
         nonce?: H128
@@ -291,10 +305,10 @@ export class ExtensionMessage {
 
     toEncodeObject(): Array<any> {
         return [
-            this.version,
+            this.version.toEncodeObject(),
             this.protocolId(),
             this.extensionName,
-            this.extensionVersion,
+            this.extensionVersion.toEncodeObject(),
             `0x${this.data.data.toString("hex")}`
         ];
     }
@@ -310,12 +324,16 @@ export class ExtensionMessage {
     ): ExtensionMessage {
         const decodedbytes = RLP.decode(bytes);
         const version =
-            decodedbytes[0].length === 0 ? 0 : decodedbytes[0].readUIntBE(0, 1);
+            decodedbytes[0].length === 0
+                ? new U256(0)
+                : new U256(parseInt(decodedbytes[0].toString("hex"), 16));
         const protocolId =
             decodedbytes[1].length === 0 ? 0 : decodedbytes[1].readUIntBE(0, 1);
         const extensionName = decodedbytes[2].toString();
         const extensionVersion =
-            decodedbytes[3].length === 0 ? 0 : decodedbytes[3].readUIntBE(0, 1);
+            decodedbytes[3].length === 0
+                ? new U256(0)
+                : new U256(parseInt(decodedbytes[3].toString("hex"), 16));
         const data = decodedbytes[4];
 
         switch (protocolId) {

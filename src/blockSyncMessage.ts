@@ -45,13 +45,13 @@ interface IStatus {
 
 interface IRequest {
     type: "request";
-    id: number;
+    id: U256;
     message: RequestMessage;
 }
 
 interface IResponse {
     type: "response";
-    id: number;
+    id: U256;
     message: ResponseMessage;
 }
 
@@ -81,14 +81,14 @@ export class BlockSyncMessage {
             case "request": {
                 return [
                     this.body.message.messageId(),
-                    this.body.id,
+                    this.body.id.toEncodeObject(),
                     this.body.message.toEncodeObject()
                 ];
             }
             case "response": {
                 return [
                     this.body.message.messageId(),
-                    this.body.id,
+                    this.body.id.toEncodeObject(),
                     this.body.message.toEncodeObject()
                 ];
             }
@@ -119,7 +119,9 @@ export class BlockSyncMessage {
             });
         } else {
             const id =
-                decodedmsg[1].length === 0 ? 0 : decodedmsg[1].readUIntBE(0, 1);
+                decodedmsg[1].length === 0
+                    ? new U256(0)
+                    : new U256(parseInt(decodedmsg[1].toString("hex"), 16));
             const msg = decodedmsg[2];
             switch (msgId) {
                 case MessageType.MESSAGE_ID_GET_HEADERS:
@@ -153,8 +155,8 @@ type requestMessageBody = IHeadersq | IBodiesq | IStateHeadq | IStateChunkq;
 
 export interface IHeadersq {
     type: "headers";
-    startNumber: number;
-    maxCount: number;
+    startNumber: U256;
+    maxCount: U256;
 }
 
 export interface IBodiesq {
@@ -206,7 +208,10 @@ export class RequestMessage {
     toEncodeObject(): Array<any> {
         switch (this.body.type) {
             case "headers": {
-                return [this.body.startNumber, this.body.maxCount];
+                return [
+                    this.body.startNumber.toEncodeObject(),
+                    this.body.maxCount.toEncodeObject()
+                ];
             }
             case "bodies": {
                 return this.body.data.map(hash => hash.toEncodeObject());
@@ -232,9 +237,13 @@ export class RequestMessage {
                 return new RequestMessage({
                     type: "headers",
                     startNumber:
-                        bytes[0].length === 0 ? 0 : bytes[0].readUIntBE(0, 1),
+                        bytes[0].length === 0
+                            ? new U256(0)
+                            : new U256(parseInt(bytes[0].toString("hex"), 16)),
                     maxCount:
-                        bytes[1].length === 0 ? 0 : bytes[1].readUIntBE(0, 1)
+                        bytes[1].length === 0
+                            ? new U256(0)
+                            : new U256(parseInt(bytes[1].toString("hex"), 16))
                 });
             }
             case MessageType.MESSAGE_ID_GET_BODIES: {

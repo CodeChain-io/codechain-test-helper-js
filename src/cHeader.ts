@@ -25,8 +25,8 @@ const BLAKE_NULL_RLP: H256 = new H256(
 
 export class Header {
     private parentHash: H256;
-    private timestamp: number;
-    private number: number;
+    private timestamp: U256;
+    private number: U256;
     private author: H160;
     private extraData: Buffer;
     private parcelsRoot: H256;
@@ -39,8 +39,8 @@ export class Header {
 
     constructor(
         parentHash: H256,
-        timestamp: number,
-        number: number,
+        timestamp: U256,
+        number: U256,
         author: H160,
         extraData: Buffer,
         parcelsRoot: H256,
@@ -69,11 +69,11 @@ export class Header {
         this.parentHash = hash;
     }
 
-    setTimestamp(stamp: number) {
+    setTimestamp(stamp: U256) {
         this.timestamp = stamp;
     }
 
-    setNumber(number: number) {
+    setNumber(number: U256) {
         this.number = number;
     }
 
@@ -122,8 +122,8 @@ export class Header {
             new H256(
                 "0000000000000000000000000000000000000000000000000000000000000000"
             ),
-            0,
-            0,
+            new U256(0),
+            new U256(0),
             new H160("0000000000000000000000000000000000000000"),
             Buffer.alloc(0),
             BLAKE_NULL_RLP,
@@ -144,8 +144,8 @@ export class Header {
             this.parcelsRoot.toEncodeObject(),
             this.invoiceRoot.toEncodeObject(),
             this.score.toEncodeObject(),
-            this.number,
-            this.timestamp,
+            this.number.toEncodeObject(),
+            this.timestamp.toEncodeObject(),
             this.extraData
         ].concat(this.seal);
     }
@@ -157,8 +157,8 @@ export class Header {
     static fromBytes(bytes: Buffer): Header {
         const decodedmsg = RLP.decode(bytes);
         const parentHash = new H256(decodedmsg[0].toString("hex"));
-        const timestamp = decodedmsg[7];
-        const number = decodedmsg[6];
+        const timestamp = new U256(parseInt(decodedmsg[7].toString("hex"), 16));
+        const number = new U256(parseInt(decodedmsg[6].toString("hex"), 16));
         const author = new H160(decodedmsg[1].toString("hex"));
         const extraData = decodedmsg[8];
         const parcelsRoot = new H256(decodedmsg[3].toString("hex"));

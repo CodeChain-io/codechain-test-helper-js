@@ -43,6 +43,8 @@ export const PORT = 6602;
 const ec = new EC("secp256k1");
 
 export class Session {
+    private static idCounter = 0;
+    private port: number;
     private targetIp: string;
     private targetPort: number;
     private socket: any;
@@ -64,18 +66,11 @@ export class Session {
         this.targetPubkey = null;
         this.encodedSecret = null;
         this.log = false;
+        this.port = PORT + Session.idCounter++;
     }
 
     setLog() {
         this.log = true;
-    }
-
-    setIp(ip: string) {
-        this.targetIp = ip;
-    }
-
-    setPort(port: number) {
-        this.targetPort = port;
     }
 
     setKey(key: any) {
@@ -94,12 +89,8 @@ export class Session {
         this.targetPubkey = pub;
     }
 
-    getIp() {
-        return this.targetIp;
-    }
-
     getPort() {
-        return this.targetPort;
+        return this.port;
     }
 
     getKey() {
@@ -163,7 +154,7 @@ export class Session {
                     }
                 });
 
-                this.socket.bind(PORT);
+                this.socket.bind(this.port);
             } catch (err) {
                 console.error(err);
                 reject(err);
@@ -201,7 +192,7 @@ export class Session {
                         resolve();
                     }
                 });
-                this.socket.bind(PORT + 1);
+                this.socket.bind(this.port + 1);
             } catch (err) {
                 console.error(err);
                 reject();
@@ -346,8 +337,6 @@ export class Session {
                                 rinfo.port
                             }`
                         );
-                    this.setIp(rinfo.address);
-                    this.setPort(rinfo.port);
                     this.sendSessionMessage(MessageType.NODE_ID_RESPONSE);
                     break;
                 }

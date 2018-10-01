@@ -13,7 +13,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
-import { Session, PORT } from "./session";
+import { Session } from "./session";
 import {
     MessageType,
     SignedMessage,
@@ -190,11 +190,14 @@ export class P2pLayer {
         switch (messageType) {
             case MessageType.SYNC_ID: {
                 if (this.log) console.log("Send SYNC_ID Message");
-                const nodeId = new NodeId(this.socket.localAddress, PORT);
+                const nodeId = new NodeId(
+                    this.socket.localAddress,
+                    this.session.getPort()
+                );
                 const msg = new HandshakeMessage({
                     type: "sync",
                     version: 0,
-                    port: PORT,
+                    port: this.session.getPort(),
                     nodeId
                 });
                 const signedMsg = new SignedMessage(

@@ -2,8 +2,8 @@ import { TestHelper } from "../testHelper";
 
 async function sendBlock() {
     const TH = new TestHelper("0.0.0.0", 3485);
+    TH.setLog();
     await TH.establish();
-
     // Genesis block
     const header = TH.soloGenesisBlockHeader();
 

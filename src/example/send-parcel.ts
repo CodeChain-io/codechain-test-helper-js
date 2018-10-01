@@ -4,6 +4,7 @@ const SDK = require("codechain-sdk");
 
 async function sendParcel() {
     const TH = new TestHelper("0.0.0.0", 3485);
+    TH.setLog();
     await TH.establish();
 
     const sdk = new SDK({

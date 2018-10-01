@@ -65,6 +65,46 @@ export class Header {
         this.bareHash = bareHash == undefined ? null : bareHash;
     }
 
+    setParentHash(hash: H256) {
+        this.parentHash = hash;
+    }
+
+    setTimestamp(stamp: number) {
+        this.timestamp = stamp;
+    }
+
+    setNumber(number: number) {
+        this.number = number;
+    }
+
+    setAuthor(author: H160) {
+        this.author = author;
+    }
+
+    setExtraData(extraData: Buffer) {
+        this.extraData = extraData;
+    }
+
+    setParcelsRoot(root: H256) {
+        this.parcelsRoot = root;
+    }
+
+    setStateRoot(root: H256) {
+        this.stateRoot = root;
+    }
+
+    setInvoiceRoot(root: H256) {
+        this.invoiceRoot = root;
+    }
+
+    setScore(score: U256) {
+        this.score = score;
+    }
+
+    setSeal(seal: Array<Buffer>) {
+        this.seal = seal;
+    }
+
     getHash(): H256 | null {
         return this.hash;
     }

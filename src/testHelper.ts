@@ -47,6 +47,10 @@ export class TestHelper {
         this.p2psocket.setLog();
     }
 
+    get genesisHash() {
+        return this.p2psocket.getGenesisHash();
+    }
+
     async establish(bestHash?: H256, bestScore?: U256) {
         await this.p2psocket.connect();
 

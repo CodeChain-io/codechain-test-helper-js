@@ -109,3 +109,21 @@ async function sendParcel() {
 }
 sendParcel();
 ```
+### Header
+You can make an arbitrary block header by your own.
+```typescript
+// You should import the Header class in your project
+import { Header } from "codechain-test-helper/lib/cHeader";
+    const header = new Header(
+        parentHash,
+        timestamp,
+        number,
+        author,
+        extraData,
+        parcelsRoot,
+        stateRoot,
+        invoiceRoot,
+        score,
+        seal
+    );
+    ```

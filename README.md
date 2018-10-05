@@ -24,7 +24,7 @@ Add this line to your `package.json` in your project directory
 }
 ```
 than you can use test-helper in your project by adding this line infront of your code
-```
+```javascript
 import { TestHelper } from "codechain-test-helper/lib/testHelper";
 ```
 

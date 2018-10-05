@@ -402,7 +402,7 @@ export class TestHelper {
             "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
         );
         const stateRoot = new H256(
-            "2f6b19afc38f6f1464af20dde08d8bebd6a6aec0a95aaf7ef2fb729c3b88dc5b"
+            "09f943122bfbb85adda8209ba72514374f71826fd874e08855b64bc95498cb02"
         );
         const invoicesRoot = new H256(
             "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
@@ -435,7 +435,7 @@ export class TestHelper {
             "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
         );
         const stateRoot = new H256(
-            "2f6b19afc38f6f1464af20dde08d8bebd6a6aec0a95aaf7ef2fb729c3b88dc5b"
+            "09f943122bfbb85adda8209ba72514374f71826fd874e08855b64bc95498cb02"
         );
         const invoicesRoot = new H256(
             "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
@@ -468,7 +468,7 @@ export class TestHelper {
             "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
         );
         const stateRoot = new H256(
-            "2f6b19afc38f6f1464af20dde08d8bebd6a6aec0a95aaf7ef2fb729c3b88dc5b"
+            "09f943122bfbb85adda8209ba72514374f71826fd874e08855b64bc95498cb02"
         );
         const invoicesRoot = new H256(
             "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"

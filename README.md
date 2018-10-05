@@ -14,7 +14,7 @@ cd lib
 ```
 you can use test-helper class in `testHelper.js`
 
-## How to use in your JS project
+## How to use the test-helper in your project
 Add this line to your `package.json` in your project directory
 ```
 "dependencies": {

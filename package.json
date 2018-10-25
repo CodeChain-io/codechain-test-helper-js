@@ -20,8 +20,7 @@
     "dgram": "^1.0.1",
     "elliptic": "^6.4.1",
     "net": "^1.0.2",
-    "rlp": "^2.1.0",
-    "tslint": "^5.11.0"
+    "rlp": "^2.1.0"
   },
   "devDependencies": {
     "@types/jest": "^23.3.1",
@@ -31,6 +30,7 @@
     "ts-jest": "^23.1.4",
     "ts-node": "^7.0.1",
     "tsc": "^1.20150623.0",
+    "tslint": "^5.11.0",
     "typescript": "^3.0.1",
     "typescript-formatter": "^7.2.2"
   }

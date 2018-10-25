@@ -244,14 +244,14 @@ export class Session {
                     );
                     const encodedNonce = this.nonce.rlpBytes();
 
-                    const iv = new Buffer(
+                    const iv = Buffer.from(
                         "00000000000000000000000000000000",
                         "hex"
                     );
                     if (this.secret == null) {
                         throw Error("Failed to get shared secret");
                     }
-                    const key = new Buffer(
+                    const key = Buffer.from(
                         this.secret.toEncodeObject().slice(2),
                         "hex"
                     );
@@ -259,7 +259,7 @@ export class Session {
 
                     encryptor.write(encodedNonce);
                     encryptor.end();
-                    this.encodedSecret = new Buffer(encryptor.read());
+                    this.encodedSecret = Buffer.from(encryptor.read());
                     this.sendSessionMessage(MessageType.NONCE_REQUEST);
                     break;
                 }
@@ -281,14 +281,14 @@ export class Session {
                             }`
                         );
 
-                    const iv = new Buffer(
+                    const iv = Buffer.from(
                         this.nonce.toEncodeObject().slice(2),
                         "hex"
                     );
                     if (this.secret == null) {
                         throw Error("Failed to get shared secret");
                     }
-                    const key = new Buffer(
+                    const key = Buffer.from(
                         this.secret.toEncodeObject().slice(2),
                         "hex"
                     );
@@ -374,14 +374,14 @@ export class Session {
                     this.secret = new H256(
                         this.key.derive(pubKey).toString(16)
                     );
-                    const ivd = new Buffer(
+                    const ivd = Buffer.from(
                         "00000000000000000000000000000000",
                         "hex"
                     );
                     if (this.secret == null) {
                         throw Error("Failed to get shared secret");
                     }
-                    const key = new Buffer(
+                    const key = Buffer.from(
                         this.secret.toEncodeObject().slice(2),
                         "hex"
                     );
@@ -397,7 +397,7 @@ export class Session {
                     );
 
                     const encodedNonce = this.nonce.rlpBytes();
-                    const ive = new Buffer(
+                    const ive = Buffer.from(
                         this.targetNonce.toEncodeObject().slice(2),
                         "hex"
                     );
@@ -409,7 +409,7 @@ export class Session {
 
                     encryptor.write(encodedNonce);
                     encryptor.end();
-                    this.encodedSecret = new Buffer(encryptor.read());
+                    this.encodedSecret = Buffer.from(encryptor.read());
                     this.sendSessionMessage(MessageType.NONCE_ALLOWED);
                     this.socket.close();
                     break;

@@ -51,7 +51,7 @@ export class P2pLayer {
         this.port = port;
         this.allowedFinish = false;
         this.arrivedExtensionMessage = [];
-        this.tcpBuffer = new Buffer([]);
+        this.tcpBuffer = Buffer.alloc(0);
         this.genesisHash = new H256(
             "0000000000000000000000000000000000000000000000000000000000000000"
         );

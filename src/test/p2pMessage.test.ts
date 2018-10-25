@@ -112,7 +112,7 @@ describe("Check P2P Message RLP encoding", () => {
             0,
             extensionName,
             extensionVersion,
-            { type: "encrypted", data: new Buffer(data) },
+            { type: "encrypted", data: Buffer.from(data) },
             new H256(
                 "0x448c7925c992f86cb4b890bea81f18818aef8ec35189e00fdf7b5e41e90a4c1b"
             ),
@@ -175,7 +175,7 @@ describe("Check P2P Message RLP encoding", () => {
             0,
             extensionName,
             extensionVersion,
-            { type: "unencrypted", data: new Buffer(data) },
+            { type: "unencrypted", data: Buffer.from(data) },
             new H256(
                 "0x0000000000000000000000000000000000000000000000000000000000000000"
             ),

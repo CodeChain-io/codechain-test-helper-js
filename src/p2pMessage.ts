@@ -273,12 +273,15 @@ export class ExtensionMessage {
                 throw Error("The secret is needed to make Encrypted Message");
             if (nonce == undefined)
                 throw Error("The nonce is needed to make Encrypted Message");
-            const key = new Buffer(secret.toEncodeObject().slice(2), "hex");
-            const iv = new Buffer(nonce.toEncodeObject().slice(2), "hex");
+            const key = Buffer.from(secret.toEncodeObject().slice(2), "hex");
+            const iv = Buffer.from(nonce.toEncodeObject().slice(2), "hex");
             const encryptor = CRYPTO.createCipheriv(ALGORITHM, key, iv);
             encryptor.write(data.data);
             encryptor.end();
-            this.data = { type: data.type, data: new Buffer(encryptor.read()) };
+            this.data = {
+                type: data.type,
+                data: Buffer.from(encryptor.read())
+            };
         } else {
             this.data = data;
         }
@@ -346,8 +349,11 @@ export class ExtensionMessage {
                     throw Error(
                         "The nonce is needed to encode Encrypted Message"
                     );
-                const key = new Buffer(secret.toEncodeObject().slice(2), "hex");
-                const iv = new Buffer(nonce.toEncodeObject().slice(2), "hex");
+                const key = Buffer.from(
+                    secret.toEncodeObject().slice(2),
+                    "hex"
+                );
+                const iv = Buffer.from(nonce.toEncodeObject().slice(2), "hex");
                 const decryptor = CRYPTO.createDecipheriv(ALGORITHM, key, iv);
                 decryptor.write(data);
                 decryptor.end();
@@ -399,7 +405,7 @@ export class SignedMessage {
             blake256WithKey(
                 this.message,
                 new Uint8Array([
-                    ...new Buffer(nonce.toEncodeObject().slice(2), "hex")
+                    ...Buffer.from(nonce.toEncodeObject().slice(2), "hex")
                 ])
             )
         );

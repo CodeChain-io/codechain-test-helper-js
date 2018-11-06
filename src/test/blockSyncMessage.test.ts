@@ -1,4 +1,5 @@
 import * as BlockSyncMessage from "../blockSyncMessage";
+import { U256 } from "codechain-primitives";
 
 describe("Check BlockSyncMessage RLP encoding", () => {
     test(
@@ -10,7 +11,7 @@ describe("Check BlockSyncMessage RLP encoding", () => {
             });
             const msg = new BlockSyncMessage.BlockSyncMessage({
                 type: "request",
-                id: 10,
+                id: new U256(10),
                 message
             });
             expect([...msg.rlpBytes()]).toEqual([195, 4, 10, 192]);
@@ -27,7 +28,7 @@ describe("Check BlockSyncMessage RLP encoding", () => {
             });
             const msg = new BlockSyncMessage.BlockSyncMessage({
                 type: "response",
-                id: 10,
+                id: new U256(10),
                 message
             });
             expect([...msg.rlpBytes()]).toEqual([196, 5, 10, 193, 192]);

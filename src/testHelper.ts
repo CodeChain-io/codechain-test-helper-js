@@ -23,9 +23,9 @@ import {
     Emitter
 } from "./blockSyncMessage";
 import { ParcelSyncMessage } from "./parcelSyncMessage";
-import { H160 } from "codechain-primitives/lib";
-import { H256 } from "codechain-primitives/lib";
-import { U256 } from "codechain-primitives/lib";
+import { H160 } from "codechain-primitives";
+import { H256 } from "codechain-primitives";
+import { U256 } from "codechain-primitives";
 import { Header } from "./cHeader";
 import { SignedParcel } from "codechain-sdk/lib/core/SignedParcel";
 

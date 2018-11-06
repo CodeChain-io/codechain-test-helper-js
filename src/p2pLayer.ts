@@ -24,8 +24,8 @@ import {
 import { NodeId } from "./sessionMessage";
 import { BlockSyncMessage } from "./blockSyncMessage";
 import { ParcelSyncMessage } from "./parcelSyncMessage";
-import { H256 } from "codechain-primitives/lib";
-import { U256 } from "codechain-primitives/lib";
+import { H256 } from "codechain-primitives";
+import { U256 } from "codechain-primitives";
 
 const NET = require("net");
 

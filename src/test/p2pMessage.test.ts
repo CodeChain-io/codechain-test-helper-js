@@ -1,7 +1,8 @@
 import * as p2pMessage from "../p2pMessage";
 import * as sessionMessage from "../sessionMessage";
-import { H128 } from "codechain-sdk/lib/core/H128";
-import { H256 } from "codechain-sdk/lib/core/H256";
+import { H128 } from "codechain-primitives";
+import { H256 } from "codechain-primitives";
+import { U256 } from "codechain-primitives";
 
 describe("Check P2P Message RLP encoding", () => {
     test(
@@ -11,7 +12,7 @@ describe("Check P2P Message RLP encoding", () => {
             const nodeId = new sessionMessage.NodeId("127.0.0.1", 8080);
             const msg = new p2pMessage.HandshakeMessage({
                 type: "sync",
-                version: 0,
+                version: new U256(0),
                 port,
                 nodeId
             });
@@ -38,17 +39,21 @@ describe("Check P2P Message RLP encoding", () => {
     test("AckMessage RLP encoding test", () => {
         const msg = new p2pMessage.HandshakeMessage({
             type: "ack",
-            version: 0
+            version: new U256(0)
         });
         expect([...msg.rlpBytes()]).toEqual([194, 128, 1]);
     });
 
     test("RequestMessage RLP encoding test", () => {
-        const msg = new p2pMessage.NegotiationMessage(0, 0x5432, {
-            type: "request",
-            extensionName: "some-extension",
-            extensionVersion: [1, 2, 3]
-        });
+        const msg = new p2pMessage.NegotiationMessage(
+            new U256(0),
+            new U256(0x5432),
+            {
+                type: "request",
+                extensionName: "some-extension",
+                extensionVersion: [new U256(1), new U256(2), new U256(3)]
+            }
+        );
         expect([...msg.rlpBytes()]).toEqual([
             216,
             128,
@@ -79,10 +84,14 @@ describe("Check P2P Message RLP encoding", () => {
     });
 
     test("AllowedMessage RLP encoding test", () => {
-        const msg = new p2pMessage.NegotiationMessage(0, 0x716216a8b1, {
-            type: "allowed",
-            version: 2
-        });
+        const msg = new p2pMessage.NegotiationMessage(
+            new U256(0),
+            new U256(0x716216a8b1),
+            {
+                type: "allowed",
+                version: new U256(2)
+            }
+        );
         expect([...msg.rlpBytes()]).toEqual([
             201,
             128,
@@ -98,18 +107,22 @@ describe("Check P2P Message RLP encoding", () => {
     });
 
     test("DeniedMessage RLP encoding test", () => {
-        const msg = new p2pMessage.NegotiationMessage(0, 0x3712, {
-            type: "denied"
-        });
+        const msg = new p2pMessage.NegotiationMessage(
+            new U256(0),
+            new U256(0x3712),
+            {
+                type: "denied"
+            }
+        );
         expect([...msg.rlpBytes()]).toEqual([197, 128, 4, 130, 55, 18]);
     });
 
     test("EncryptedMessage RLP encoding test", () => {
         const extensionName = "encrypt";
-        const extensionVersion = 3;
+        const extensionVersion = new U256(3);
         const data = "this data must be encrypted";
         const msg = new p2pMessage.ExtensionMessage(
-            0,
+            new U256(0),
             extensionName,
             extensionVersion,
             { type: "encrypted", data: Buffer.from(data) },
@@ -169,10 +182,10 @@ describe("Check P2P Message RLP encoding", () => {
 
     test("UnencryptedMessage RLP encoding test", () => {
         const extensionName = "unencrypt";
-        const extensionVersion = 3;
+        const extensionVersion = new U256(3);
         const data = "this data must be encrypted";
         const msg = new p2pMessage.ExtensionMessage(
-            0,
+            new U256(0),
             extensionName,
             extensionVersion,
             { type: "unencrypted", data: Buffer.from(data) },
@@ -232,7 +245,7 @@ describe("Check P2P Message RLP encoding", () => {
         const nodeId = new sessionMessage.NodeId("127.0.0.1", 8080);
         const msg = new p2pMessage.HandshakeMessage({
             type: "sync",
-            version: 0,
+            version: new U256(0),
             port,
             nodeId
         });

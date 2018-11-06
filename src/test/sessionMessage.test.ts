@@ -1,6 +1,7 @@
 import * as sessionMessage from "../sessionMessage";
-import { H128 } from "codechain-sdk/lib/core/H128";
-import { H512 } from "codechain-sdk/lib/core/H512";
+import { H128 } from "codechain-primitives";
+import { H512 } from "codechain-primitives";
+import { U256 } from "codechain-primitives";
 
 describe("Check Session Message RLP encoding", () => {
     test(
@@ -10,7 +11,11 @@ describe("Check Session Message RLP encoding", () => {
                 ip: "80.80.80.80",
                 port: 8080
             });
-            const msg = new sessionMessage.SessionMessage(0, 0x8a, body);
+            const msg = new sessionMessage.SessionMessage(
+                0,
+                new U256(0x8a),
+                body
+            );
             expect([...msg.rlpBytes()]).toEqual([
                 204,
                 128,
@@ -37,7 +42,11 @@ describe("Check Session Message RLP encoding", () => {
                 ip: "80.80.80.80",
                 port: 8080
             });
-            const msg = new sessionMessage.SessionMessage(0, 0x9a, body);
+            const msg = new sessionMessage.SessionMessage(
+                0,
+                new U256(0x9a),
+                body
+            );
             expect([...msg.rlpBytes()]).toEqual([
                 204,
                 128,
@@ -63,7 +72,7 @@ describe("Check Session Message RLP encoding", () => {
             const body = new sessionMessage.NonceRequest(
                 new H128("0x000000000000000000000000DEADBEEF").rlpBytes()
             );
-            const msg = new sessionMessage.SessionMessage(0, 0, body);
+            const msg = new sessionMessage.SessionMessage(0, new U256(0), body);
             expect([...msg.rlpBytes()]).toEqual([
                 213,
                 128,
@@ -96,7 +105,7 @@ describe("Check Session Message RLP encoding", () => {
         "NonceDenied RLP encoding test",
         () => {
             const body = new sessionMessage.NonceDenied("connection denied");
-            const msg = new sessionMessage.SessionMessage(0, 6, body);
+            const msg = new sessionMessage.SessionMessage(0, new U256(6), body);
             expect([...msg.rlpBytes()]).toEqual([
                 213,
                 128,
@@ -133,7 +142,7 @@ describe("Check Session Message RLP encoding", () => {
                     "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000DEADBEEF"
                 )
             );
-            const msg = new sessionMessage.SessionMessage(0, 0, body);
+            const msg = new sessionMessage.SessionMessage(0, new U256(0), body);
             expect([...msg.rlpBytes()]).toEqual([
                 248,
                 69,

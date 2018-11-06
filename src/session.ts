@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-import { H128 } from "codechain-sdk/lib/core/H128";
+import { H128 } from "codechain-primitives/lib";
 import { U256 } from "codechain-primitives/lib";
-import { H512 } from "codechain-sdk/lib/core/H512";
-import { H256 } from "codechain-sdk/lib/core/H256";
+import { H512 } from "codechain-primitives/lib";
+import { H256 } from "codechain-primitives/lib";
 import {
     MessageType,
     SessionMessage,

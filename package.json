@@ -16,6 +16,7 @@
     "@types/crypto-js": "^3.1.43",
     "blakejs": "^1.1.0",
     "codechain-sdk": "^0.2.0-alpha.2",
+    "codechain-primitives": "^0.4.1",
     "crypto": "^1.0.1",
     "dgram": "^1.0.1",
     "elliptic": "^6.4.1",
@@ -23,7 +24,7 @@
     "rlp": "^2.1.0"
   },
   "devDependencies": {
-    "@types/jest": "^23.3.1",
+    "@types/jest": "^23.3.9",
     "@types/node": "^10.7.1",
     "jest": "^23.5.0",
     "prettier": "^1.14.3",

@@ -39,7 +39,7 @@ const EC = require("elliptic").ec;
 const RLP = require("rlp");
 
 const MAX_PACKET_SIZE = 1024;
-export const PORT = 6602;
+export const PORT = 6603;
 
 const ec = new EC("secp256k1");
 

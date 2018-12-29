@@ -27,7 +27,7 @@ import { H160 } from "codechain-primitives";
 import { H256 } from "codechain-primitives";
 import { U256 } from "codechain-primitives";
 import { Header } from "./cHeader";
-import { SignedParcel } from "codechain-sdk/lib/core/SignedParcel";
+import { SignedTransaction } from "codechain-sdk/lib/core/SignedTransaction";
 
 type EncodedHeaders = Array<Array<Buffer>>;
 type EncodedParcels = Array<Array<Buffer>>;
@@ -240,7 +240,10 @@ export class TestHelper {
         if (this.log) console.log("Send body response");
     }
 
-    async sendBlock(header: Array<Header>, body: Array<Array<SignedParcel>>) {
+    async sendBlock(
+        header: Array<Header>,
+        body: Array<Array<SignedTransaction>>
+    ) {
         if (this.log) console.log("Send blocks");
         const bestBlock = header[header.length - 1];
         const score = bestBlock.getScore();
@@ -265,7 +268,7 @@ export class TestHelper {
         await this.sendParcelSyncMessage(parcels);
     }
 
-    async sendParcel(parcels: Array<SignedParcel>) {
+    async sendParcel(parcels: Array<SignedTransaction>) {
         if (this.log) console.log("Send parcels");
         await this.sendParcelSyncMessage(
             parcels.map(parcel => parcel.toEncodeObject())

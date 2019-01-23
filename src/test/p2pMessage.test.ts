@@ -1,5 +1,4 @@
 import * as p2pMessage from "../p2pMessage";
-import * as sessionMessage from "../sessionMessage";
 import { U128, U256, H256 } from "codechain-primitives";
 
 import "jest";
@@ -7,29 +6,12 @@ import "jest";
 describe("Check P2P Message RLP encoding", () => {
     test("SyncMessage RLP encoding test", () => {
         const port = 1234;
-        const nodeId = new sessionMessage.NodeId("127.0.0.1", 8080);
         const msg = new p2pMessage.HandshakeMessage({
             type: "sync",
             version: new U256(0),
-            port,
-            nodeId
+            port
         });
-        expect([...msg.rlpBytes()]).toEqual([
-            205,
-            128,
-            128,
-            130,
-            4,
-            210,
-            199,
-            127,
-            128,
-            128,
-            1,
-            130,
-            31,
-            144
-        ]);
+        expect([...msg.rlpBytes()]).toEqual([197, 128, 128, 130, 4, 210]);
     }, 10000);
 
     test("AckMessage RLP encoding test", () => {
@@ -238,67 +220,57 @@ describe("Check P2P Message RLP encoding", () => {
 
     test("SignedMessage RLP encoding test", () => {
         const port = 1234;
-        const nodeId = new sessionMessage.NodeId("127.0.0.1", 8080);
         const msg = new p2pMessage.HandshakeMessage({
             type: "sync",
             version: new U256(0),
-            port,
-            nodeId
+            port
         });
         const signedmsg = new p2pMessage.SignedMessage(
             msg,
             new U128("0x00000000000000000000000000000000")
         );
         expect([...signedmsg.rlpBytes()]).toEqual([
-            240,
-            142,
-            205,
+            232,
+            134,
+            197,
             128,
             128,
             130,
             4,
             210,
-            199,
-            127,
-            128,
-            128,
-            1,
-            130,
-            31,
-            144,
             160,
-            70,
-            188,
-            57,
-            103,
-            108,
-            139,
-            156,
-            239,
-            229,
-            139,
-            113,
-            40,
-            176,
-            187,
-            228,
+            115,
+            78,
+            6,
+            129,
+            102,
             216,
+            22,
+            227,
+            53,
+            80,
             86,
-            146,
-            58,
-            151,
-            93,
-            160,
-            204,
-            148,
-            170,
-            123,
-            206,
+            35,
+            194,
+            162,
+            107,
+            233,
+            138,
+            55,
+            27,
+            166,
+            193,
+            147,
+            139,
+            14,
             77,
-            145,
-            159,
-            46,
-            27
+            131,
+            193,
+            15,
+            152,
+            19,
+            253,
+            64
         ]);
     });
 });

@@ -5,9 +5,8 @@
   "typings": "lib/testHelper.d.ts",
   "license": "MIT",
   "scripts": {
-    "start": "jest -i",
     "build": "tsc -p .",
-    "test": "npm run lint",
+    "test": "jest -i",
     "lint": "tslint -p . && prettier 'src/**/*.{ts,js,json}' -l",
     "fmt": "tslint -p . --fix && prettier 'src/**/*.{ts,js,json}' --write"
   },

@@ -21,7 +21,6 @@ import {
     NegotiationMessage,
     ExtensionMessage
 } from "./p2pMessage";
-import { NodeId } from "./sessionMessage";
 import { BlockSyncMessage } from "./blockSyncMessage";
 import { ParcelSyncMessage } from "./parcelSyncMessage";
 import { H256 } from "codechain-primitives";
@@ -179,15 +178,10 @@ export class P2pLayer {
         switch (messageType) {
             case MessageType.SYNC_ID: {
                 if (this.log) console.log("Send SYNC_ID Message");
-                const nodeId = new NodeId(
-                    this.socket.localAddress,
-                    this.session.getPort()
-                );
                 const msg = new HandshakeMessage({
                     type: "sync",
                     version: new U256(0),
-                    port: this.session.getPort(),
-                    nodeId
+                    port: this.session.getPort()
                 });
                 const signedMsg = new SignedMessage(
                     msg,

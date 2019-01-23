@@ -13,7 +13,6 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
-import { NodeId } from "./sessionMessage";
 import { H256, U128, U256 } from "codechain-primitives";
 import { blake256WithKey } from "codechain-sdk/lib/utils";
 
@@ -57,8 +56,7 @@ export class HandshakeMessage {
                 return [
                     this.body.version.toEncodeObject(),
                     this.protocolId(),
-                    this.body.port,
-                    this.body.nodeId.toEncodeObject()
+                    this.body.port
                 ];
             }
             case "ack": {
@@ -87,8 +85,7 @@ export class HandshakeMessage {
                 return new HandshakeMessage({
                     type: "sync",
                     version,
-                    port: decodedbytes[2],
-                    nodeId: decodedbytes[3]
+                    port: decodedbytes[2]
                 });
             }
             case MessageType.ACK_ID: {
@@ -106,7 +103,6 @@ interface HandshakeSync {
     type: "sync";
     version: U256;
     port: number;
-    nodeId: NodeId;
 }
 
 interface HandshakeAck {

@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "target": "es2015",
+        "target": "es2018",
         "types": [
             "node"
         ],
@@ -13,7 +13,7 @@
         "noUnusedParameters": true
     },
     "include": [
-        "./src/**/*",
+        "./src/**/*"
     ],
     "exclude": [
         "./src/**/*.test.ts"

@@ -90,100 +90,88 @@ export class P2pLayer {
                 reject(err);
             }
 
-            this.socket.connect(
-                { port: this.port, host: this.ip },
-                () => {
-                    if (this.log) console.log("Start TCP connection");
-                    if (this.log)
-                        console.log(
-                            "   local = %s:%s",
-                            this.socket.localAddress,
-                            this.socket.localPort
-                        );
-                    if (this.log)
-                        console.log(
-                            "   remote = %s:%s",
-                            this.socket.remoteAddress,
-                            this.socket.remotePort
-                        );
-                    this.sendP2pMessage(MessageType.SYNC_ID);
+            this.socket.connect({ port: this.port, host: this.ip }, () => {
+                if (this.log) console.log("Start TCP connection");
+                if (this.log)
+                    console.log(
+                        "   local = %s:%s",
+                        this.socket.localAddress,
+                        this.socket.localPort
+                    );
+                if (this.log)
+                    console.log(
+                        "   remote = %s:%s",
+                        this.socket.remoteAddress,
+                        this.socket.remotePort
+                    );
+                this.sendP2pMessage(MessageType.SYNC_ID);
 
-                    this.socket.on("data", (data: Buffer) => {
-                        try {
-                            this.tcpBuffer = Buffer.concat([
-                                this.tcpBuffer,
-                                data
-                            ]);
-                            while (this.tcpBuffer.length !== 0) {
-                                const len = this.tcpBuffer.readUIntBE(0, 1);
-                                if (len >= 0xf8) {
-                                    const lenOfLen = len - 0xf7;
-                                    const dataLen = this.tcpBuffer
-                                        .slice(1, 1 + lenOfLen)
-                                        .readUIntBE(0, lenOfLen);
-                                    if (
-                                        this.tcpBuffer.length >=
+                this.socket.on("data", (data: Buffer) => {
+                    try {
+                        this.tcpBuffer = Buffer.concat([this.tcpBuffer, data]);
+                        while (this.tcpBuffer.length !== 0) {
+                            const len = this.tcpBuffer.readUIntBE(0, 1);
+                            if (len >= 0xf8) {
+                                const lenOfLen = len - 0xf7;
+                                const dataLen = this.tcpBuffer
+                                    .slice(1, 1 + lenOfLen)
+                                    .readUIntBE(0, lenOfLen);
+                                if (
+                                    this.tcpBuffer.length >=
+                                    dataLen + lenOfLen + 1
+                                ) {
+                                    const rlpPacket = this.tcpBuffer.slice(
+                                        0,
                                         dataLen + lenOfLen + 1
-                                    ) {
-                                        const rlpPacket = this.tcpBuffer.slice(
-                                            0,
-                                            dataLen + lenOfLen + 1
-                                        );
-                                        this.tcpBuffer = this.tcpBuffer.slice(
-                                            dataLen + lenOfLen + 1,
-                                            this.tcpBuffer.length
-                                        );
-                                        if (
-                                            this.onP2pMessage(rlpPacket) ===
-                                            true
-                                        )
-                                            resolve();
-                                    } else {
-                                        throw Error(
-                                            "The rlp data has not arrived yet"
-                                        );
-                                    }
-                                } else if (len >= 0xc0) {
-                                    const dataLen = len - 0xc0;
-                                    if (this.tcpBuffer.length >= dataLen + 1) {
-                                        const rlpPacket = this.tcpBuffer.slice(
-                                            0,
-                                            dataLen + 1
-                                        );
-                                        this.tcpBuffer = this.tcpBuffer.slice(
-                                            dataLen + 1,
-                                            this.tcpBuffer.length
-                                        );
-                                        if (
-                                            this.onP2pMessage(rlpPacket) ===
-                                            true
-                                        )
-                                            resolve();
-                                    } else {
-                                        throw Error(
-                                            "The rlp data has not arrived yet"
-                                        );
-                                    }
+                                    );
+                                    this.tcpBuffer = this.tcpBuffer.slice(
+                                        dataLen + lenOfLen + 1,
+                                        this.tcpBuffer.length
+                                    );
+                                    if (this.onP2pMessage(rlpPacket) === true)
+                                        resolve();
                                 } else {
-                                    throw Error("Invalid RLP data");
+                                    throw Error(
+                                        "The rlp data has not arrived yet"
+                                    );
                                 }
+                            } else if (len >= 0xc0) {
+                                const dataLen = len - 0xc0;
+                                if (this.tcpBuffer.length >= dataLen + 1) {
+                                    const rlpPacket = this.tcpBuffer.slice(
+                                        0,
+                                        dataLen + 1
+                                    );
+                                    this.tcpBuffer = this.tcpBuffer.slice(
+                                        dataLen + 1,
+                                        this.tcpBuffer.length
+                                    );
+                                    if (this.onP2pMessage(rlpPacket) === true)
+                                        resolve();
+                                } else {
+                                    throw Error(
+                                        "The rlp data has not arrived yet"
+                                    );
+                                }
+                            } else {
+                                throw Error("Invalid RLP data");
                             }
-                        } catch (err) {
-                            console.error(err);
                         }
-                    });
-                    this.socket.on("end", () => {
-                        if (this.log) console.log("TCP disconnected");
-                    });
-                    this.socket.on("error", (err: any) => {
-                        if (this.log)
-                            console.log("Socket Error: ", JSON.stringify(err));
-                    });
-                    this.socket.on("close", () => {
-                        if (this.log) console.log("Socket Closed");
-                    });
-                }
-            );
+                    } catch (err) {
+                        console.error(err);
+                    }
+                });
+                this.socket.on("end", () => {
+                    if (this.log) console.log("TCP disconnected");
+                });
+                this.socket.on("error", (err: any) => {
+                    if (this.log)
+                        console.log("Socket Error: ", JSON.stringify(err));
+                });
+                this.socket.on("close", () => {
+                    if (this.log) console.log("Socket Closed");
+                });
+            });
         });
     }
 

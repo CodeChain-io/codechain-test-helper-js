@@ -5,36 +5,32 @@ import { H256 } from "codechain-primitives";
 import { U256 } from "codechain-primitives";
 
 describe("Check P2P Message RLP encoding", () => {
-    test(
-        "SyncMessage RLP encoding test",
-        () => {
-            const port = 1234;
-            const nodeId = new sessionMessage.NodeId("127.0.0.1", 8080);
-            const msg = new p2pMessage.HandshakeMessage({
-                type: "sync",
-                version: new U256(0),
-                port,
-                nodeId
-            });
-            expect([...msg.rlpBytes()]).toEqual([
-                205,
-                128,
-                128,
-                130,
-                4,
-                210,
-                199,
-                127,
-                128,
-                128,
-                1,
-                130,
-                31,
-                144
-            ]);
-        },
-        10000
-    );
+    test("SyncMessage RLP encoding test", () => {
+        const port = 1234;
+        const nodeId = new sessionMessage.NodeId("127.0.0.1", 8080);
+        const msg = new p2pMessage.HandshakeMessage({
+            type: "sync",
+            version: new U256(0),
+            port,
+            nodeId
+        });
+        expect([...msg.rlpBytes()]).toEqual([
+            205,
+            128,
+            128,
+            130,
+            4,
+            210,
+            199,
+            127,
+            128,
+            128,
+            1,
+            130,
+            31,
+            144
+        ]);
+    }, 10000);
 
     test("AckMessage RLP encoding test", () => {
         const msg = new p2pMessage.HandshakeMessage({

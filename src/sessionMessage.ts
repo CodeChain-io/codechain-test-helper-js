@@ -101,11 +101,8 @@ export class SessionMessage {
             case MessageType.NODE_ID_REQUEST: {
                 const ip: string = bodyObject
                     .slice(0, 4)
-                    .map(
-                        (num: any) =>
-                            num.length === 0
-                                ? 0
-                                : num.readUIntBE(0, 1).toString()
+                    .map((num: any) =>
+                        num.length === 0 ? 0 : num.readUIntBE(0, 1).toString()
                     )
                     .join(".");
                 const port: number = bodyObject[4].readUIntBE(0, 1);
@@ -120,11 +117,8 @@ export class SessionMessage {
             case MessageType.NODE_ID_RESPONSE: {
                 const ip: string = bodyObject
                     .slice(0, 4)
-                    .map(
-                        (num: any) =>
-                            num.length === 0
-                                ? 0
-                                : num.readUIntBE(0, 1).toString()
+                    .map((num: any) =>
+                        num.length === 0 ? 0 : num.readUIntBE(0, 1).toString()
                     )
                     .join(".");
                 const port: number = bodyObject[4].readUIntBE(0, 1);

@@ -1,6 +1,8 @@
 import * as BlockSyncMessage from "../blockSyncMessage";
 import { U256 } from "codechain-primitives";
 
+import "jest";
+
 describe("Check BlockSyncMessage RLP encoding", () => {
     test("RequestBodyMessage RLP encoding test", () => {
         const message = new BlockSyncMessage.RequestMessage({

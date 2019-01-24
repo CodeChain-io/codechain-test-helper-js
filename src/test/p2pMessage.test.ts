@@ -4,6 +4,8 @@ import { H128 } from "codechain-primitives";
 import { H256 } from "codechain-primitives";
 import { U256 } from "codechain-primitives";
 
+import "jest";
+
 describe("Check P2P Message RLP encoding", () => {
     test("SyncMessage RLP encoding test", () => {
         const port = 1234;

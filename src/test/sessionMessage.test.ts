@@ -3,6 +3,8 @@ import { H128 } from "codechain-primitives";
 import { H512 } from "codechain-primitives";
 import { U256 } from "codechain-primitives";
 
+import "jest";
+
 describe("Check Session Message RLP encoding", () => {
     test("NodeIdRequest RLP encoding test", () => {
         const body = new sessionMessage.NodeIdRequest({

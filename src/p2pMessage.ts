@@ -14,9 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { NodeId } from "./sessionMessage";
-import { H256 } from "codechain-primitives";
-import { U256 } from "codechain-primitives";
-import { H128 } from "codechain-primitives";
+import { H256, U128, U256 } from "codechain-primitives";
 import { blake256WithKey } from "codechain-sdk/lib/utils";
 
 const RLP = require("rlp");
@@ -262,7 +260,7 @@ export class ExtensionMessage {
         extensionVersion: U256,
         data: IData,
         secret?: H256,
-        nonce?: H128
+        nonce?: U128
     ) {
         this.version = version;
         this.extensionName = extensionName;
@@ -274,7 +272,7 @@ export class ExtensionMessage {
             if (nonce == undefined)
                 throw Error("The nonce is needed to make Encrypted Message");
             const key = Buffer.from(secret.toEncodeObject().slice(2), "hex");
-            const iv = Buffer.from(nonce.toEncodeObject().slice(2), "hex");
+            const iv = Buffer.from(nonce.toString(16).padStart(32, "0"), "hex");
             const encryptor = CRYPTO.createCipheriv(ALGORITHM, key, iv);
             encryptor.write(data.data);
             encryptor.end();
@@ -323,7 +321,7 @@ export class ExtensionMessage {
     static fromBytes(
         bytes: Buffer,
         secret?: H256,
-        nonce?: H128
+        nonce?: U128
     ): ExtensionMessage {
         const decodedbytes = RLP.decode(bytes);
         const version =
@@ -353,7 +351,10 @@ export class ExtensionMessage {
                     secret.toEncodeObject().slice(2),
                     "hex"
                 );
-                const iv = Buffer.from(nonce.toEncodeObject().slice(2), "hex");
+                const iv = Buffer.from(
+                    nonce.toString(16).padStart(32, "0"),
+                    "hex"
+                );
                 const decryptor = CRYPTO.createDecipheriv(ALGORITHM, key, iv);
                 decryptor.write(data);
                 decryptor.end();
@@ -399,14 +400,12 @@ export class SignedMessage {
     private message: Buffer;
     private signature: H256;
 
-    constructor(message: Message, nonce: H128) {
+    constructor(message: Message, nonce: U128) {
         this.message = message.rlpBytes();
         this.signature = new H256(
             blake256WithKey(
                 this.message,
-                new Uint8Array([
-                    ...Buffer.from(nonce.toEncodeObject().slice(2), "hex")
-                ])
+                new Uint8Array([...Buffer.from(nonce.toString(16), "hex")])
             )
         );
     }
@@ -422,7 +421,7 @@ export class SignedMessage {
         return RLP.encode(this.toEncodeObject());
     }
 
-    static fromBytes(bytes: Buffer, secret?: H256, nonce?: H128): Message {
+    static fromBytes(bytes: Buffer, secret?: H256, nonce?: U128): Message {
         const decodedbytes = RLP.decode(bytes);
         const message = decodedbytes[0];
         // const signature = decodedbytes[1];

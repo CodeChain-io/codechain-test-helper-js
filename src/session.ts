@@ -14,10 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-import { H128 } from "codechain-primitives";
-import { U256 } from "codechain-primitives";
-import { H512 } from "codechain-primitives";
-import { H256 } from "codechain-primitives";
+import { U128, U256, H256, H512 } from "codechain-primitives";
 import {
     MessageType,
     SessionMessage,
@@ -50,10 +47,10 @@ export class Session {
     private targetPort: number;
     private socket: any;
     private key: null | any;
-    private nonce: H128;
+    private nonce: U128;
     private secret: null | H256;
     private encodedSecret: null | Buffer;
-    private targetNonce: H128;
+    private targetNonce: U128;
     private targetPubkey: null | H512;
     private log: boolean;
 
@@ -61,9 +58,9 @@ export class Session {
         this.targetIp = ip;
         this.targetPort = port;
         this.key = null;
-        this.nonce = new H128("0x000000000000000000000000DEADBEEF");
+        this.nonce = new U128("0x000000000000000000000000DEADBEEF");
         this.secret = null;
-        this.targetNonce = new H128("0x00000000000000000000000000000000");
+        this.targetNonce = new U128("0x00000000000000000000000000000000");
         this.targetPubkey = null;
         this.encodedSecret = null;
         this.log = false;
@@ -78,11 +75,11 @@ export class Session {
         this.key = key;
     }
 
-    setNonce(nonce: H128) {
+    setNonce(nonce: U128) {
         this.nonce = nonce;
     }
 
-    setTargetNonce(nonce: H128) {
+    setTargetNonce(nonce: U128) {
         this.targetNonce = nonce;
     }
 
@@ -282,7 +279,7 @@ export class Session {
                         );
 
                     const iv = Buffer.from(
-                        this.nonce.toEncodeObject().slice(2),
+                        this.nonce.toString(16).padStart(32, "0"),
                         "hex"
                     );
                     if (this.secret == null) {
@@ -299,8 +296,8 @@ export class Session {
                     );
                     decryptor.write(sessionMsg.getBody().getItem());
                     decryptor.end();
-                    this.targetNonce = new H128(
-                        RLP.decode(decryptor.read()).toString("hex")
+                    this.targetNonce = new U128(
+                        `0x${RLP.decode(decryptor.read()).toString("hex")}`
                     );
 
                     this.socket.close();
@@ -392,13 +389,13 @@ export class Session {
                     );
                     decryptor.write(sessionMsg.getBody().getItem());
                     decryptor.end();
-                    this.targetNonce = new H128(
-                        RLP.decode(decryptor.read()).toString("hex")
+                    this.targetNonce = new U128(
+                        `0x${RLP.decode(decryptor.read()).toString("hex")}`
                     );
 
                     const encodedNonce = this.nonce.rlpBytes();
                     const ive = Buffer.from(
-                        this.targetNonce.toEncodeObject().slice(2),
+                        this.targetNonce.toString(16).padStart(32, "0"),
                         "hex"
                     );
                     const encryptor = CRYPTO.createCipheriv(

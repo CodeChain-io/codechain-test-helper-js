@@ -1,8 +1,6 @@
 import * as p2pMessage from "../p2pMessage";
 import * as sessionMessage from "../sessionMessage";
-import { H128 } from "codechain-primitives";
-import { H256 } from "codechain-primitives";
-import { U256 } from "codechain-primitives";
+import { U128, U256, H256 } from "codechain-primitives";
 
 import "jest";
 
@@ -127,7 +125,7 @@ describe("Check P2P Message RLP encoding", () => {
             new H256(
                 "0x448c7925c992f86cb4b890bea81f18818aef8ec35189e00fdf7b5e41e90a4c1b"
             ),
-            new H128("0x6d21cfc0a73acea109f24bb408b4b676")
+            new U128("0x6d21cfc0a73acea109f24bb408b4b676")
         );
         expect([...msg.rlpBytes()]).toEqual([
             236,
@@ -190,7 +188,7 @@ describe("Check P2P Message RLP encoding", () => {
             new H256(
                 "0x0000000000000000000000000000000000000000000000000000000000000000"
             ),
-            new H128("0x00000000000000000000000000000000")
+            new U128("0x00000000000000000000000000000000")
         );
         expect([...msg.rlpBytes()]).toEqual([
             233,
@@ -249,7 +247,7 @@ describe("Check P2P Message RLP encoding", () => {
         });
         const signedmsg = new p2pMessage.SignedMessage(
             msg,
-            new H128("00000000000000000000000000000000")
+            new U128("0x00000000000000000000000000000000")
         );
         expect([...signedmsg.rlpBytes()]).toEqual([
             240,
@@ -269,38 +267,38 @@ describe("Check P2P Message RLP encoding", () => {
             31,
             144,
             160,
-            175,
-            189,
-            253,
-            75,
-            254,
-            164,
-            207,
-            23,
-            42,
+            70,
+            188,
+            57,
+            103,
+            108,
+            139,
+            156,
+            239,
+            229,
+            139,
+            113,
+            40,
+            176,
             187,
-            234,
-            244,
-            45,
-            212,
-            131,
-            50,
-            11,
-            132,
-            161,
-            87,
-            90,
-            126,
-            203,
-            191,
-            83,
-            115,
-            223,
-            38,
-            254,
-            181,
-            147,
-            181
+            228,
+            216,
+            86,
+            146,
+            58,
+            151,
+            93,
+            160,
+            204,
+            148,
+            170,
+            123,
+            206,
+            77,
+            145,
+            159,
+            46,
+            27
         ]);
     });
 });

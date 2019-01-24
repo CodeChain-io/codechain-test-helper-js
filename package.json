@@ -14,7 +14,7 @@
   "dependencies": {
     "@types/crypto-js": "^3.1.43",
     "blakejs": "^1.1.0",
-    "codechain-primitives": "^0.4.4",
+    "codechain-primitives": "^0.4.5",
     "codechain-sdk": "https://github.com/sgkim126/codechain-sdk-js.git#refac-lib",
     "crypto": "^1.0.1",
     "dgram": "^1.0.1",

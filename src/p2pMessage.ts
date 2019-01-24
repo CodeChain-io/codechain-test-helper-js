@@ -422,7 +422,7 @@ export class SignedMessage {
         return RLP.encode(this.toEncodeObject());
     }
 
-    static fromBytes(bytes: Buffer, nonce?: H128, secret?: H256): Message {
+    static fromBytes(bytes: Buffer, secret?: H256, nonce?: H128): Message {
         const decodedbytes = RLP.decode(bytes);
         const message = decodedbytes[0];
         // const signature = decodedbytes[1];

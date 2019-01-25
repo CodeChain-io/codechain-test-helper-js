@@ -18,15 +18,12 @@ import { U128, U256, H256, H512 } from "codechain-primitives";
 import {
     MessageType,
     SessionMessage,
-    NodeIdRequest,
-    NodeIdResponse,
     SecretRequest,
     SecretAllowed,
     SecretDenied,
     NonceRequest,
     NonceAllowed,
-    NonceDenied,
-    NodeId
+    NonceDenied
 } from "./sessionMessage";
 
 const CRYPTO = require("crypto");
@@ -139,7 +136,8 @@ export class Session {
                                 address.port
                         );
                     try {
-                        this.sendSessionMessage(MessageType.NODE_ID_REQUEST);
+                        this.key = ec.genKeyPair();
+                        this.sendSessionMessage(MessageType.SECRET_REQUEST);
                     } catch (err) {
                         console.error(err);
                         reject(err);
@@ -202,18 +200,6 @@ export class Session {
         try {
             const sessionMsg = SessionMessage.fromBytes(msg);
             switch (sessionMsg.getBody().protocolId()) {
-                case MessageType.NODE_ID_RESPONSE: {
-                    if (this.log)
-                        console.log(
-                            `Received: NODE_ID_RESPONSE from ${rinfo.address}:${
-                                rinfo.port
-                            }`
-                        );
-                    this.key = ec.genKeyPair();
-                    this.sendSessionMessage(MessageType.SECRET_REQUEST);
-
-                    break;
-                }
                 case MessageType.SECRET_ALLOWED: {
                     if (this.log)
                         console.log(
@@ -328,16 +314,6 @@ export class Session {
         try {
             const sessionMsg = SessionMessage.fromBytes(msg);
             switch (sessionMsg.getBody().protocolId()) {
-                case MessageType.NODE_ID_REQUEST: {
-                    if (this.log)
-                        console.log(
-                            `Received: NODE_ID_REQUEST from ${rinfo.address}:${
-                                rinfo.port
-                            }`
-                        );
-                    this.sendSessionMessage(MessageType.NODE_ID_RESPONSE);
-                    break;
-                }
                 case MessageType.SECRET_REQUEST: {
                     if (this.log)
                         console.log(
@@ -424,38 +400,6 @@ export class Session {
 
     private async sendSessionMessage(messageType: MessageType): Promise<void> {
         switch (messageType) {
-            case MessageType.NODE_ID_REQUEST: {
-                if (this.log) console.log("Send NODE_ID_REQUEST");
-                const message = new SessionMessage(
-                    0,
-                    new U256(0),
-                    new NodeIdRequest(
-                        new NodeId(this.targetIp, this.targetPort)
-                    )
-                );
-                await this.socket.send(
-                    message.rlpBytes(),
-                    this.targetPort,
-                    this.targetIp
-                );
-                break;
-            }
-            case MessageType.NODE_ID_RESPONSE: {
-                if (this.log) console.log("Send NODE_ID_RESPONSE");
-                const message = new SessionMessage(
-                    0,
-                    new U256(0),
-                    new NodeIdResponse(
-                        new NodeId(this.targetIp, this.targetPort)
-                    )
-                );
-                await this.socket.send(
-                    message.rlpBytes(),
-                    this.targetPort,
-                    this.targetIp
-                );
-                break;
-            }
             case MessageType.SECRET_REQUEST: {
                 if (this.log) console.log("Send SECRET_REQUESTE");
                 if (this.key == null) {

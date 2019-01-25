@@ -6,52 +6,6 @@ import { U256 } from "codechain-primitives";
 import "jest";
 
 describe("Check Session Message RLP encoding", () => {
-    test("NodeIdRequest RLP encoding test", () => {
-        const body = new sessionMessage.NodeIdRequest({
-            ip: "80.80.80.80",
-            port: 8080
-        });
-        const msg = new sessionMessage.SessionMessage(0, new U256(0x8a), body);
-        expect([...msg.rlpBytes()]).toEqual([
-            204,
-            128,
-            129,
-            138,
-            1,
-            199,
-            80,
-            80,
-            80,
-            80,
-            130,
-            31,
-            144
-        ]);
-    }, 10000);
-
-    test("NodeIdResponse RLP encoding test", () => {
-        const body = new sessionMessage.NodeIdResponse({
-            ip: "80.80.80.80",
-            port: 8080
-        });
-        const msg = new sessionMessage.SessionMessage(0, new U256(0x9a), body);
-        expect([...msg.rlpBytes()]).toEqual([
-            204,
-            128,
-            129,
-            154,
-            2,
-            199,
-            80,
-            80,
-            80,
-            80,
-            130,
-            31,
-            144
-        ]);
-    }, 10000);
-
     test("NonceRequest RLP encoding test", () => {
         const body = new sessionMessage.NonceRequest(
             new H128("0x000000000000000000000000DEADBEEF").rlpBytes()

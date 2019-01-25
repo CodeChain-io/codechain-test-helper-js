@@ -19,10 +19,7 @@ import { U256 } from "codechain-primitives";
 const RLP = require("rlp");
 
 export enum MessageType {
-    NODE_ID_REQUEST = 0x01,
-    NODE_ID_RESPONSE,
-
-    SECRET_REQUEST,
+    SECRET_REQUEST = 0x03,
     SECRET_ALLOWED,
     SECRET_DENIED,
 
@@ -38,8 +35,6 @@ interface IBody {
 }
 
 type Body =
-    | NodeIdRequest
-    | NodeIdResponse
     | SecretRequest
     | SecretAllowed
     | SecretDenied
@@ -98,38 +93,6 @@ export class SessionMessage {
     static fromBytes(bytes: Buffer): SessionMessage {
         const [version, seq, protocolId, bodyObject] = RLP.decode(bytes);
         switch (protocolId.readUIntBE(0, 1)) {
-            case MessageType.NODE_ID_REQUEST: {
-                const ip: string = bodyObject
-                    .slice(0, 4)
-                    .map((num: any) =>
-                        num.length === 0 ? 0 : num.readUIntBE(0, 1).toString()
-                    )
-                    .join(".");
-                const port: number = bodyObject[4].readUIntBE(0, 1);
-                return new SessionMessage(
-                    version.length === 0 ? 0 : version.readUIntBE(0, 1),
-                    seq.length === 0
-                        ? new U256(0)
-                        : new U256(parseInt(seq.toString("hex"), 16)),
-                    new NodeIdRequest(new NodeId(ip, port))
-                );
-            }
-            case MessageType.NODE_ID_RESPONSE: {
-                const ip: string = bodyObject
-                    .slice(0, 4)
-                    .map((num: any) =>
-                        num.length === 0 ? 0 : num.readUIntBE(0, 1).toString()
-                    )
-                    .join(".");
-                const port: number = bodyObject[4].readUIntBE(0, 1);
-                return new SessionMessage(
-                    version.length === 0 ? 0 : version.readUIntBE(0, 1),
-                    seq.length === 0
-                        ? new U256(0)
-                        : new U256(parseInt(seq.toString("hex"), 16)),
-                    new NodeIdResponse(new NodeId(ip, port))
-                );
-            }
             case MessageType.SECRET_REQUEST: {
                 const secret: H512 = new H512(bodyObject.toString("hex"));
                 return new SessionMessage(
@@ -192,11 +155,6 @@ export class SessionMessage {
     }
 }
 
-interface INodeId {
-    ip: string;
-    port: number;
-}
-
 export class NodeId {
     public ip: string; // x.x.x.x
     public port: number; // x
@@ -229,60 +187,6 @@ export class NodeId {
         rlparray.push(this.port);
 
         return rlparray;
-    }
-}
-
-export class NodeIdRequest implements IBody {
-    private nodeid: NodeId;
-
-    constructor(obj?: INodeId) {
-        const ip = (obj && obj.ip) || "0.0.0.0";
-        const port = (obj && obj.port) || 3485;
-        this.nodeid = new NodeId(ip, port);
-    }
-
-    setNodeid(obj: INodeId) {
-        this.nodeid.setIp(obj.ip);
-        this.nodeid.setPort(obj.port);
-    }
-
-    getItem() {
-        return this.nodeid;
-    }
-
-    toEncodeObject(): Array<any> | number | string {
-        return this.nodeid.toEncodeObject();
-    }
-
-    protocolId(): number {
-        return MessageType.NODE_ID_REQUEST;
-    }
-}
-
-export class NodeIdResponse implements IBody {
-    private nodeid: NodeId;
-
-    constructor(obj?: INodeId) {
-        const ip = (obj && obj.ip) || "0.0.0.0";
-        const port = (obj && obj.port) || 3485;
-        this.nodeid = new NodeId(ip, port);
-    }
-
-    setNodeid(obj: INodeId) {
-        this.nodeid.setIp(obj.ip);
-        this.nodeid.setPort(obj.port);
-    }
-
-    getItem() {
-        return this.nodeid;
-    }
-
-    toEncodeObject(): Array<any> | number | string {
-        return this.nodeid.toEncodeObject();
-    }
-
-    protocolId(): number {
-        return MessageType.NODE_ID_RESPONSE;
     }
 }
 

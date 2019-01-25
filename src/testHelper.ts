@@ -13,21 +13,12 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
-import { P2pLayer } from "./p2pLayer";
-import {
-    BlockSyncMessage,
-    ResponseMessage,
-    MessageType,
-    IHeadersq,
-    IBodiesq,
-    Emitter
-} from "./blockSyncMessage";
-import { ParcelSyncMessage } from "./parcelSyncMessage";
-import { H160 } from "codechain-primitives";
-import { H256 } from "codechain-primitives";
-import { U256 } from "codechain-primitives";
-import { Header } from "./cHeader";
+import { H160, H256, U256 } from "codechain-primitives";
 import { SignedTransaction } from "codechain-sdk/lib/core/SignedTransaction";
+import { BlockSyncMessage, Emitter, IBodiesq, IHeadersq, MessageType, RequestMessage, ResponseMessage } from "./blockSyncMessage";
+import { Header } from "./cHeader";
+import { P2pLayer } from "./p2pLayer";
+import { ParcelSyncMessage } from "./parcelSyncMessage";
 
 type EncodedHeaders = Array<Array<Buffer>>;
 type EncodedParcels = Array<Array<Buffer>>;
@@ -169,6 +160,25 @@ export class TestHelper {
             bestHash,
             genesisHash
         });
+        await this.p2psocket.sendExtensionMessage(
+            "block-propagation",
+            new U256(0),
+            msg.rlpBytes(),
+            false
+        );
+    }
+
+    async sendBlockHeaderRequest(startNumber: U256, maxCount: U256) {
+        const msg = new BlockSyncMessage({
+            type: "request",
+            id: new U256(1),
+            message: new RequestMessage({
+                type: "headers",
+                startNumber,
+                maxCount,
+            }),
+        });
+
         await this.p2psocket.sendExtensionMessage(
             "block-propagation",
             new U256(0),

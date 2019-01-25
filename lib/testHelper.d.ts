@@ -1,9 +1,8 @@
 /// <reference types="node" />
-import { IHeadersq, IBodiesq } from "./blockSyncMessage";
-import { H256 } from "codechain-primitives";
-import { U256 } from "codechain-primitives";
-import { Header } from "./cHeader";
+import { H256, U256 } from "codechain-primitives";
 import { SignedTransaction } from "codechain-sdk/lib/core/SignedTransaction";
+import { IBodiesq, IHeadersq } from "./blockSyncMessage";
+import { Header } from "./cHeader";
 declare type EncodedHeaders = Array<Array<Buffer>>;
 declare type EncodedParcels = Array<Array<Buffer>>;
 declare type EncodedBodies = Array<Array<Array<Buffer>>>;
@@ -21,6 +20,7 @@ export declare class TestHelper {
     getBlockHeaderRequest(): IHeadersq | null;
     getBlockBodyRequest(): IBodiesq | null;
     sendStatus(score: U256, bestHash: H256, genesisHash: H256): Promise<void>;
+    sendHeaderRequest(startNumber: U256, maxCount: U256): Promise<void>;
     sendBlockHeaderResponse(headers: EncodedHeaders): Promise<void>;
     sendBlockBodyResponse(bodies: EncodedBodies): Promise<void>;
     sendParcelSyncMessage(parcels: EncodedParcels): Promise<void>;

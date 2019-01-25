@@ -401,7 +401,9 @@ export class SignedMessage {
         this.signature = new H256(
             blake256WithKey(
                 this.message,
-                new Uint8Array([...Buffer.from(nonce.toString(16), "hex")])
+                new Uint8Array([
+                    ...Buffer.from(nonce.toString(16).padStart(32, "0"), "hex")
+                ])
             )
         );
     }

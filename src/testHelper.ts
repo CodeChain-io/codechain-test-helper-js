@@ -22,7 +22,7 @@ import {
     IBodiesq,
     Emitter
 } from "./blockSyncMessage";
-import { ParcelSyncMessage } from "./parcelSyncMessage";
+import { TransactionSyncMessage } from "./transactionSyncMessage";
 import { H160 } from "codechain-primitives";
 import { H256 } from "codechain-primitives";
 import { U256 } from "codechain-primitives";
@@ -30,7 +30,7 @@ import { Header } from "./cHeader";
 import { SignedTransaction } from "codechain-sdk/lib/core/SignedTransaction";
 
 type EncodedHeaders = Array<Array<Buffer>>;
-type EncodedParcels = Array<Array<Buffer>>;
+type EncodedTransactions = Array<Array<Buffer>>;
 type EncodedBodies = Array<Array<Array<Buffer>>>;
 
 export class TestHelper {
@@ -117,13 +117,13 @@ export class TestHelper {
         return null;
     }
 
-    // Get the most recent parcel sync message from the node
-    getParcelSyncMessage(): EncodedHeaders | null {
+    // Get the most recent transaction sync message from the node
+    getTransactionSyncMessage(): EncodedHeaders | null {
         for (const msg of this.p2psocket
             .getArrivedExtensionMessage()
             .reverse()) {
             const requestBody = msg.getBody();
-            if (requestBody.type === "parcels") {
+            if (requestBody.type === "transactions") {
                 return requestBody.data;
             }
         }
@@ -207,13 +207,13 @@ export class TestHelper {
         );
     }
 
-    async sendParcelSyncMessage(parcels: EncodedParcels) {
-        const message = new ParcelSyncMessage({
-            type: "parcels",
-            data: parcels
+    async sendTransactionSyncMessage(transactions: EncodedTransactions) {
+        const message = new TransactionSyncMessage({
+            type: "transactions",
+            data: transactions
         });
         await this.p2psocket.sendExtensionMessage(
-            "parcel-propagation",
+            "transaction-propagation",
             new U256(0),
             message.rlpBytes(),
             false
@@ -258,20 +258,22 @@ export class TestHelper {
 
         await this.waitBodyRequest();
         await this.sendBlockBodyResponse(
-            body.map(parcels => parcels.map(parcel => parcel.toEncodeObject()))
+            body.map(transactions =>
+                transactions.map(tx => tx.toEncodeObject())
+            )
         );
         if (this.log) console.log("Send body response");
     }
 
-    async sendEncodedParcel(parcels: EncodedParcels) {
-        if (this.log) console.log("Send parcels");
-        await this.sendParcelSyncMessage(parcels);
+    async sendEncodedTransaction(transactions: EncodedTransactions) {
+        if (this.log) console.log("Send transactions");
+        await this.sendTransactionSyncMessage(transactions);
     }
 
-    async sendParcel(parcels: Array<SignedTransaction>) {
-        if (this.log) console.log("Send parcels");
-        await this.sendParcelSyncMessage(
-            parcels.map(parcel => parcel.toEncodeObject())
+    async sendTransaction(transactions: Array<SignedTransaction>) {
+        if (this.log) console.log("Send transactions");
+        await this.sendTransactionSyncMessage(
+            transactions.map(tx => tx.toEncodeObject())
         );
     }
 
@@ -401,7 +403,7 @@ export class TestHelper {
             115,
             124
         ]);
-        const parcelsRoot = new H256(
+        const transactionsRoot = new H256(
             "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
         );
         const stateRoot = new H256(
@@ -418,7 +420,7 @@ export class TestHelper {
             number,
             author,
             extraData,
-            parcelsRoot,
+            transactionsRoot,
             stateRoot,
             invoicesRoot,
             score,
@@ -434,7 +436,7 @@ export class TestHelper {
         const number = new U256(1);
         const author = new H160("7777777777777777777777777777777777777777");
         const extraData = Buffer.alloc(0);
-        const parcelsRoot = new H256(
+        const transactionsRoot = new H256(
             "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
         );
         const stateRoot = new H256(
@@ -451,7 +453,7 @@ export class TestHelper {
             number,
             author,
             extraData,
-            parcelsRoot,
+            transactionsRoot,
             stateRoot,
             invoicesRoot,
             score,
@@ -467,7 +469,7 @@ export class TestHelper {
         const number = new U256(2);
         const author = new H160("6666666666666666666666666666666666666666");
         const extraData = Buffer.alloc(0);
-        const parcelsRoot = new H256(
+        const transactionsRoot = new H256(
             "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
         );
         const stateRoot = new H256(
@@ -484,7 +486,7 @@ export class TestHelper {
             number,
             author,
             extraData,
-            parcelsRoot,
+            transactionsRoot,
             stateRoot,
             invoicesRoot,
             score,

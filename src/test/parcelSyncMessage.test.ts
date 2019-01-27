@@ -1,11 +1,11 @@
-import * as ParcelSyncMessage from "../parcelSyncMessage";
+import * as ParcelSyncMessage from "../transactionSyncMessage";
 
 import "jest";
 
-describe("Check ParcelSyncMessage RLP encoding", () => {
-    test("ParcelSyncMessage RLP encoding test", () => {
-        const msg = new ParcelSyncMessage.ParcelSyncMessage({
-            type: "parcels",
+describe("Check TransactionSyncMessage RLP encoding", () => {
+    test("TransactionSyncMessage RLP encoding test", () => {
+        const msg = new ParcelSyncMessage.TransactionSyncMessage({
+            type: "transactions",
             data: []
         });
         expect([...msg.rlpBytes()]).toEqual([192]);

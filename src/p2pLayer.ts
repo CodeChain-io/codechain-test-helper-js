@@ -22,7 +22,7 @@ import {
     ExtensionMessage
 } from "./p2pMessage";
 import { BlockSyncMessage } from "./blockSyncMessage";
-import { ParcelSyncMessage } from "./parcelSyncMessage";
+import { TransactionSyncMessage } from "./transactionSyncMessage";
 import { H256 } from "codechain-primitives";
 import { U256 } from "codechain-primitives";
 
@@ -35,7 +35,7 @@ export class P2pLayer {
     private socket: any;
     private allowedFinish: boolean;
     private arrivedExtensionMessage: Array<
-        BlockSyncMessage | ParcelSyncMessage
+        BlockSyncMessage | TransactionSyncMessage
     >;
     private tcpBuffer: Buffer;
     private genesisHash: H256;
@@ -68,7 +68,9 @@ export class P2pLayer {
         return this.genesisHash;
     }
 
-    getArrivedExtensionMessage(): Array<BlockSyncMessage | ParcelSyncMessage> {
+    getArrivedExtensionMessage(): Array<
+        BlockSyncMessage | TransactionSyncMessage
+    > {
         return this.arrivedExtensionMessage;
     }
 
@@ -194,7 +196,7 @@ export class P2pLayer {
                 if (this.log) console.log("Send REQUEST_ID Message");
                 const extensionName = [
                     "block-propagation",
-                    "parcel-propagation"
+                    "transaction-propagation"
                 ];
                 let msg = new NegotiationMessage(new U256(0), new U256(0), {
                     type: "request",
@@ -343,8 +345,8 @@ export class P2pLayer {
 
                 break;
             }
-            case "parcel-propagation": {
-                const extensionMsg = ParcelSyncMessage.fromBytes(
+            case "transaction-propagation": {
+                const extensionMsg = TransactionSyncMessage.fromBytes(
                     msg.getData().data
                 );
                 this.arrivedExtensionMessage.push(extensionMsg);

@@ -29,7 +29,7 @@ export class Header {
     private number: U256;
     private author: H160;
     private extraData: Buffer;
-    private parcelsRoot: H256;
+    private transactionsRoot: H256;
     private stateRoot: H256;
     private invoiceRoot: H256;
     private score: U256;
@@ -43,7 +43,7 @@ export class Header {
         number: U256,
         author: H160,
         extraData: Buffer,
-        parcelsRoot: H256,
+        transactionsRoot: H256,
         stateRoot: H256,
         invoiceRoot: H256,
         score: U256,
@@ -56,7 +56,7 @@ export class Header {
         this.number = number;
         this.author = author;
         this.extraData = extraData;
-        this.parcelsRoot = parcelsRoot;
+        this.transactionsRoot = transactionsRoot;
         this.stateRoot = stateRoot;
         this.invoiceRoot = invoiceRoot;
         this.score = score;
@@ -85,8 +85,8 @@ export class Header {
         this.extraData = extraData;
     }
 
-    setParcelsRoot(root: H256) {
-        this.parcelsRoot = root;
+    setTransactionsRoot(root: H256) {
+        this.transactionsRoot = root;
     }
 
     setStateRoot(root: H256) {
@@ -141,7 +141,7 @@ export class Header {
             this.parentHash.toEncodeObject(),
             this.author.toEncodeObject(),
             this.stateRoot.toEncodeObject(),
-            this.parcelsRoot.toEncodeObject(),
+            this.transactionsRoot.toEncodeObject(),
             this.invoiceRoot.toEncodeObject(),
             this.score.toEncodeObject(),
             this.number.toEncodeObject(),
@@ -161,7 +161,7 @@ export class Header {
         const number = new U256(parseInt(decodedmsg[6].toString("hex"), 16));
         const author = new H160(decodedmsg[1].toString("hex"));
         const extraData = decodedmsg[8];
-        const parcelsRoot = new H256(decodedmsg[3].toString("hex"));
+        const transactionsRoot = new H256(decodedmsg[3].toString("hex"));
         const stateRoot = new H256(decodedmsg[2].toString("hex"));
         const invoiceRoot = new H256(decodedmsg[4].toString("hex"));
         const score = decodedmsg[5];
@@ -172,7 +172,7 @@ export class Header {
             number,
             author,
             extraData,
-            parcelsRoot,
+            transactionsRoot,
             stateRoot,
             invoiceRoot,
             score,

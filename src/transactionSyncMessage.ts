@@ -15,21 +15,21 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 const RLP = require("rlp");
 
-type parcelSyncMessageBody = IParcels;
+type transactionSyncMessageBody = ITransactions;
 
-interface IParcels {
-    type: "parcels";
+interface ITransactions {
+    type: "transactions";
     data: Array<Array<Buffer>>;
 }
 
-export class ParcelSyncMessage {
-    private body: parcelSyncMessageBody;
+export class TransactionSyncMessage {
+    private body: transactionSyncMessageBody;
 
-    constructor(body: parcelSyncMessageBody) {
+    constructor(body: transactionSyncMessageBody) {
         this.body = body;
     }
 
-    getBody(): parcelSyncMessageBody {
+    getBody(): transactionSyncMessageBody {
         return this.body;
     }
 
@@ -41,8 +41,11 @@ export class ParcelSyncMessage {
         return RLP.encode(this.toEncodeObject());
     }
 
-    static fromBytes(bytes: Buffer): ParcelSyncMessage {
+    static fromBytes(bytes: Buffer): TransactionSyncMessage {
         const decodedmsg = RLP.decode(bytes);
-        return new ParcelSyncMessage({ type: "parcels", data: decodedmsg });
+        return new TransactionSyncMessage({
+            type: "transactions",
+            data: decodedmsg
+        });
     }
 }

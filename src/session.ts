@@ -20,10 +20,8 @@ import {
     SessionMessage,
     SecretRequest,
     SecretAllowed,
-    SecretDenied,
     NonceRequest,
-    NonceAllowed,
-    NonceDenied
+    NonceAllowed
 } from "./sessionMessage";
 
 const CRYPTO = require("crypto");
@@ -246,16 +244,6 @@ export class Session {
                     this.sendSessionMessage(MessageType.NONCE_REQUEST);
                     break;
                 }
-                case MessageType.SECRET_DENIED: {
-                    if (this.log)
-                        console.log(
-                            `Received: SECRET_DENIED from ${rinfo.address}:${
-                                rinfo.port
-                            }`
-                        );
-                    this.socket.close();
-                    throw Error(sessionMsg.getBody().getItem());
-                }
                 case MessageType.NONCE_ALLOWED: {
                     if (this.log)
                         console.log(
@@ -288,16 +276,6 @@ export class Session {
 
                     this.socket.close();
                     return true;
-                }
-                case MessageType.NONCE_DENIED: {
-                    if (this.log)
-                        console.log(
-                            `Received: NONCE_DENIED from ${rinfo.address}:${
-                                rinfo.port
-                            }`
-                        );
-                    this.socket.close();
-                    throw Error(sessionMsg.getBody().getItem());
                 }
                 default: {
                     throw Error("Got invalid session message while connecting");
@@ -448,20 +426,6 @@ export class Session {
                 );
                 break;
             }
-            case MessageType.SECRET_DENIED: {
-                if (this.log) console.log("Send SECRET_DENIED");
-                const message = new SessionMessage(
-                    0,
-                    new U256(0),
-                    new SecretDenied("Secret key request is denied")
-                );
-                await this.socket.send(
-                    message.rlpBytes(),
-                    this.targetPort,
-                    this.targetIp
-                );
-                break;
-            }
             case MessageType.NONCE_REQUEST: {
                 if (this.log) console.log("Send NONCE_REQUEST");
                 if (this.encodedSecret == null) {
@@ -488,20 +452,6 @@ export class Session {
                     0,
                     new U256(0),
                     new NonceAllowed(this.encodedSecret)
-                );
-                await this.socket.send(
-                    message.rlpBytes(),
-                    this.targetPort,
-                    this.targetIp
-                );
-                break;
-            }
-            case MessageType.NONCE_DENIED: {
-                if (this.log) console.log("Send NONCE_DENIED");
-                const message = new SessionMessage(
-                    0,
-                    new U256(0),
-                    new NonceDenied("Nonce request is denied")
                 );
                 await this.socket.send(
                     message.rlpBytes(),

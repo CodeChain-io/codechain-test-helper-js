@@ -21,11 +21,9 @@ const RLP = require("rlp");
 export enum MessageType {
     SECRET_REQUEST = 0x03,
     SECRET_ALLOWED,
-    SECRET_DENIED,
 
-    NONCE_REQUEST,
-    NONCE_ALLOWED,
-    NONCE_DENIED
+    NONCE_REQUEST = 0x06,
+    NONCE_ALLOWED
 }
 
 interface IBody {
@@ -34,13 +32,7 @@ interface IBody {
     getItem: () => any;
 }
 
-type Body =
-    | SecretRequest
-    | SecretAllowed
-    | SecretDenied
-    | NonceRequest
-    | NonceAllowed
-    | NonceDenied;
+type Body = SecretRequest | SecretAllowed | NonceRequest | NonceAllowed;
 
 export class SessionMessage {
     private version: number;
@@ -113,15 +105,6 @@ export class SessionMessage {
                     new SecretAllowed(secret)
                 );
             }
-            case MessageType.SECRET_DENIED: {
-                return new SessionMessage(
-                    version.length === 0 ? 0 : version.readUIntBE(0, 1),
-                    seq.length === 0
-                        ? new U256(0)
-                        : new U256(parseInt(seq.toString("hex"), 16)),
-                    new SecretDenied(bodyObject.toString())
-                );
-            }
             case MessageType.NONCE_REQUEST: {
                 return new SessionMessage(
                     version.length === 0 ? 0 : version.readUIntBE(0, 1),
@@ -138,15 +121,6 @@ export class SessionMessage {
                         ? new U256(0)
                         : new U256(parseInt(seq.toString("hex"), 16)),
                     new NonceAllowed(bodyObject)
-                );
-            }
-            case MessageType.NONCE_DENIED: {
-                return new SessionMessage(
-                    version.length === 0 ? 0 : version.readUIntBE(0, 1),
-                    seq.length === 0
-                        ? new U256(0)
-                        : new U256(parseInt(seq.toString("hex"), 16)),
-                    new NonceDenied(bodyObject.toString())
                 );
             }
             default:
@@ -238,30 +212,6 @@ export class SecretAllowed implements IBody {
     }
 }
 
-export class SecretDenied implements IBody {
-    private reason: string;
-
-    constructor(reason: string) {
-        this.reason = reason;
-    }
-
-    setReason(reason: string) {
-        this.reason = reason;
-    }
-
-    getItem() {
-        return this.reason;
-    }
-
-    toEncodeObject(): Array<any> | number | string {
-        return this.reason;
-    }
-
-    protocolId(): number {
-        return MessageType.SECRET_DENIED;
-    }
-}
-
 export class NonceRequest implements IBody {
     private nonce: Buffer;
 
@@ -307,29 +257,5 @@ export class NonceAllowed implements IBody {
 
     protocolId(): number {
         return MessageType.NONCE_ALLOWED;
-    }
-}
-
-export class NonceDenied implements IBody {
-    private reason: string;
-
-    constructor(reason: string) {
-        this.reason = reason;
-    }
-
-    setReason(reason: string) {
-        this.reason = reason;
-    }
-
-    getItem() {
-        return this.reason;
-    }
-
-    toEncodeObject(): Array<any> | number | string {
-        return this.reason;
-    }
-
-    protocolId(): number {
-        return MessageType.NONCE_DENIED;
     }
 }

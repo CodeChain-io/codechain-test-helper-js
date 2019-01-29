@@ -10,10 +10,9 @@ describe("Check Session Message RLP encoding", () => {
         const body = new sessionMessage.NonceRequest(
             new H128("0x000000000000000000000000DEADBEEF").rlpBytes()
         );
-        const msg = new sessionMessage.SessionMessage(0, new U256(0), body);
+        const msg = new sessionMessage.SessionMessage(0, body);
         expect([...msg.rlpBytes()]).toEqual([
-            213,
-            128,
+            212,
             128,
             6,
             145,
@@ -43,11 +42,10 @@ describe("Check Session Message RLP encoding", () => {
                 "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000DEADBEEF"
             )
         );
-        const msg = new sessionMessage.SessionMessage(0, new U256(0), body);
+        const msg = new sessionMessage.SessionMessage(0, body);
         expect([...msg.rlpBytes()]).toEqual([
             248,
-            69,
-            128,
+            68,
             128,
             3,
             184,

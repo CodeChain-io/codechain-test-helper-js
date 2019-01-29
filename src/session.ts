@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-import { U128, U256, H256, H512 } from "codechain-primitives";
+import { U128, H256, H512 } from "codechain-primitives";
 import {
     MessageType,
     SessionMessage,
@@ -385,7 +385,6 @@ export class Session {
                 }
                 const message = new SessionMessage(
                     0,
-                    new U256(0),
                     new SecretRequest(
                         new H512(
                             this.key
@@ -409,7 +408,6 @@ export class Session {
                 }
                 const message = new SessionMessage(
                     0,
-                    new U256(0),
                     new SecretAllowed(
                         new H512(
                             this.key
@@ -433,7 +431,6 @@ export class Session {
                 }
                 const message = new SessionMessage(
                     0,
-                    new U256(0),
                     new NonceRequest(this.encodedSecret)
                 );
                 await this.socket.send(
@@ -450,7 +447,6 @@ export class Session {
                 }
                 const message = new SessionMessage(
                     0,
-                    new U256(0),
                     new NonceAllowed(this.encodedSecret)
                 );
                 await this.socket.send(

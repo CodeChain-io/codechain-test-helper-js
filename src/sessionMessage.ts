@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { H512 } from "codechain-primitives";
-import { U256 } from "codechain-primitives";
 
 const RLP = require("rlp");
 
@@ -36,21 +35,15 @@ type Body = SecretRequest | SecretAllowed | NonceRequest | NonceAllowed;
 
 export class SessionMessage {
     private version: number;
-    private seq: U256;
     private body: IBody;
 
-    constructor(version: number, seq: U256, body: Body) {
+    constructor(version: number, body: Body) {
         this.version = version;
-        this.seq = seq;
         this.body = body;
     }
 
     setVersion(version: number) {
         this.version = version;
-    }
-
-    setSeq(seq: U256) {
-        this.seq = seq;
     }
 
     setBody(body: Body) {
@@ -61,10 +54,6 @@ export class SessionMessage {
         return this.version;
     }
 
-    getSeq() {
-        return this.seq;
-    }
-
     getBody() {
         return this.body;
     }
@@ -72,7 +61,6 @@ export class SessionMessage {
     toEncodeObject(): Array<any> {
         return [
             this.version,
-            this.seq.toEncodeObject(),
             this.body.protocolId(),
             this.body.toEncodeObject()
         ];
@@ -83,15 +71,12 @@ export class SessionMessage {
     }
 
     static fromBytes(bytes: Buffer): SessionMessage {
-        const [version, seq, protocolId, bodyObject] = RLP.decode(bytes);
+        const [version, protocolId, bodyObject] = RLP.decode(bytes);
         switch (protocolId.readUIntBE(0, 1)) {
             case MessageType.SECRET_REQUEST: {
                 const secret: H512 = new H512(bodyObject.toString("hex"));
                 return new SessionMessage(
                     version.length === 0 ? 0 : version.readUIntBE(0, 1),
-                    seq.length === 0
-                        ? new U256(0)
-                        : new U256(parseInt(seq.toString("hex"), 16)),
                     new SecretRequest(secret)
                 );
             }
@@ -99,27 +84,18 @@ export class SessionMessage {
                 const secret: H512 = new H512(bodyObject.toString("hex"));
                 return new SessionMessage(
                     version.length === 0 ? 0 : version.readUIntBE(0, 1),
-                    seq.length === 0
-                        ? new U256(0)
-                        : new U256(parseInt(seq.toString("hex"), 16)),
                     new SecretAllowed(secret)
                 );
             }
             case MessageType.NONCE_REQUEST: {
                 return new SessionMessage(
                     version.length === 0 ? 0 : version.readUIntBE(0, 1),
-                    seq.length === 0
-                        ? new U256(0)
-                        : new U256(parseInt(seq.toString("hex"), 16)),
                     new NonceRequest(bodyObject)
                 );
             }
             case MessageType.NONCE_ALLOWED: {
                 return new SessionMessage(
                     version.length === 0 ? 0 : version.readUIntBE(0, 1),
-                    seq.length === 0
-                        ? new U256(0)
-                        : new U256(parseInt(seq.toString("hex"), 16)),
                     new NonceAllowed(bodyObject)
                 );
             }

@@ -1,4 +1,4 @@
-// Copyright 2018 Kodebox, Inc.
+// Copyright 2018-2019 Kodebox, Inc.
 // This file is part of CodeChain.
 //
 // This program is free software: you can redistribute it and/or modify
@@ -14,14 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 import { P2pLayer } from "./p2pLayer";
-import {
-    BlockSyncMessage,
-    ResponseMessage,
-    MessageType,
-    IHeadersq,
-    IBodiesq,
-    Emitter
-} from "./blockSyncMessage";
+import { BlockSyncMessage, ResponseMessage, MessageType, IHeadersq, IBodiesq, Emitter } from "./blockSyncMessage";
 import { TransactionSyncMessage } from "./transactionSyncMessage";
 import { H160 } from "codechain-primitives";
 import { H256 } from "codechain-primitives";
@@ -37,14 +30,14 @@ export class TestHelper {
     private p2psocket: P2pLayer;
     private log: boolean;
 
-    constructor(ip: string, port: number) {
-        this.p2psocket = new P2pLayer(ip, port);
+    constructor(ip: string, port: number, networkId: string) {
+        this.p2psocket = new P2pLayer(ip, port, networkId);
         this.log = false;
     }
 
     setLog() {
         this.log = true;
-        this.p2psocket.setLog();
+        this.p2psocket.enableLog();
     }
 
     get genesisHash() {
@@ -55,9 +48,7 @@ export class TestHelper {
         await this.p2psocket.connect();
 
         let isStatusArrived;
-        for (const msg of this.p2psocket
-            .getArrivedExtensionMessage()
-            .reverse()) {
+        for (const msg of this.p2psocket.getArrivedExtensionMessage().reverse()) {
             const responseBody = msg.getBody();
             if (responseBody.type === "status") {
                 isStatusArrived = true;
@@ -65,13 +56,10 @@ export class TestHelper {
         }
         if (!isStatusArrived) await this.waitStatusMessage();
 
-        const score =
-            bestScore == undefined ? new U256("99999999999999999") : bestScore;
+        const score = bestScore == undefined ? new U256("99999999999999999") : bestScore;
         const best =
             bestHash == undefined
-                ? new H256(
-                      "0x649fb35c0e304eb601ae71fe330729a2c1a27687ae7e2b0170866b86047a7bb9"
-                  )
+                ? new H256("0x649fb35c0e304eb601ae71fe330729a2c1a27687ae7e2b0170866b86047a7bb9")
                 : bestHash;
         const genesis = this.p2psocket.getGenesisHash();
         this.sendStatus(score, best, genesis);
@@ -87,9 +75,7 @@ export class TestHelper {
 
     // Get block headers from the most recent header response
     getBlockHeaderResponse(): EncodedHeaders | null {
-        for (const msg of this.p2psocket
-            .getArrivedExtensionMessage()
-            .reverse()) {
+        for (const msg of this.p2psocket.getArrivedExtensionMessage().reverse()) {
             const responseBody = msg.getBody();
             if (responseBody.type === "response") {
                 const responseMsgBody = responseBody.message.getBody();
@@ -103,9 +89,7 @@ export class TestHelper {
 
     // Get block bodies from the most recent body response
     getBlockBodyResponse(): EncodedBodies | null {
-        for (const msg of this.p2psocket
-            .getArrivedExtensionMessage()
-            .reverse()) {
+        for (const msg of this.p2psocket.getArrivedExtensionMessage().reverse()) {
             const responseBody = msg.getBody();
             if (responseBody.type === "response") {
                 const responseMsgBody = responseBody.message.getBody();
@@ -119,9 +103,7 @@ export class TestHelper {
 
     // Get the most recent transaction sync message from the node
     getTransactionSyncMessage(): EncodedHeaders | null {
-        for (const msg of this.p2psocket
-            .getArrivedExtensionMessage()
-            .reverse()) {
+        for (const msg of this.p2psocket.getArrivedExtensionMessage().reverse()) {
             const requestBody = msg.getBody();
             if (requestBody.type === "transactions") {
                 return requestBody.data;
@@ -132,9 +114,7 @@ export class TestHelper {
 
     // Get the most recent block header request from the node
     getBlockHeaderRequest(): IHeadersq | null {
-        for (const msg of this.p2psocket
-            .getArrivedExtensionMessage()
-            .reverse()) {
+        for (const msg of this.p2psocket.getArrivedExtensionMessage().reverse()) {
             const requestBody = msg.getBody();
             if (requestBody.type === "request") {
                 const requestMsgBody = requestBody.message.getBody();
@@ -148,9 +128,7 @@ export class TestHelper {
 
     // Get the most recent block body request from the node
     getBlockBodyRequest(): IBodiesq | null {
-        for (const msg of this.p2psocket
-            .getArrivedExtensionMessage()
-            .reverse()) {
+        for (const msg of this.p2psocket.getArrivedExtensionMessage().reverse()) {
             const requestBody = msg.getBody();
             if (requestBody.type === "request") {
                 const requestMsgBody = requestBody.message.getBody();
@@ -169,12 +147,7 @@ export class TestHelper {
             bestHash,
             genesisHash
         });
-        await this.p2psocket.sendExtensionMessage(
-            "block-propagation",
-            new U256(0),
-            msg.rlpBytes(),
-            false
-        );
+        await this.p2psocket.sendExtensionMessage("block-propagation", msg.rlpBytes(), false);
     }
 
     async sendBlockHeaderResponse(headers: EncodedHeaders) {
@@ -184,12 +157,7 @@ export class TestHelper {
             id: this.p2psocket.getHeaderNonce(),
             message
         });
-        await this.p2psocket.sendExtensionMessage(
-            "block-propagation",
-            new U256(0),
-            msg.rlpBytes(),
-            false
-        );
+        await this.p2psocket.sendExtensionMessage("block-propagation", msg.rlpBytes(), false);
     }
 
     async sendBlockBodyResponse(bodies: EncodedBodies) {
@@ -199,12 +167,7 @@ export class TestHelper {
             id: this.p2psocket.getBodyNonce(),
             message
         });
-        await this.p2psocket.sendExtensionMessage(
-            "block-propagation",
-            new U256(0),
-            msg.rlpBytes(),
-            false
-        );
+        await this.p2psocket.sendExtensionMessage("block-propagation", msg.rlpBytes(), false);
     }
 
     async sendTransactionSyncMessage(transactions: EncodedTransactions) {
@@ -212,20 +175,10 @@ export class TestHelper {
             type: "transactions",
             data: transactions
         });
-        await this.p2psocket.sendExtensionMessage(
-            "transaction-propagation",
-            new U256(0),
-            message.rlpBytes(),
-            false
-        );
+        await this.p2psocket.sendExtensionMessage("transaction-propagation", message.rlpBytes(), false);
     }
 
-    async sendEncodedBlock(
-        header: EncodedHeaders,
-        body: EncodedBodies,
-        bestBlockHash: H256,
-        bestBlockScore: U256
-    ) {
+    async sendEncodedBlock(header: EncodedHeaders, body: EncodedBodies, bestBlockHash: H256, bestBlockScore: U256) {
         if (this.log) console.log("Send blocks");
         const score = bestBlockScore;
         const best = bestBlockHash;
@@ -240,10 +193,7 @@ export class TestHelper {
         if (this.log) console.log("Send body response");
     }
 
-    async sendBlock(
-        header: Array<Header>,
-        body: Array<Array<SignedTransaction>>
-    ) {
+    async sendBlock(header: Array<Header>, body: Array<Array<SignedTransaction>>) {
         if (this.log) console.log("Send blocks");
         const bestBlock = header[header.length - 1];
         const score = bestBlock.getScore();
@@ -251,17 +201,11 @@ export class TestHelper {
         const genesis = this.p2psocket.getGenesisHash();
         await this.sendStatus(score, best, genesis);
 
-        await this.sendBlockHeaderResponse(
-            header.map(header => header.toEncodeObject())
-        );
+        await this.sendBlockHeaderResponse(header.map(header => header.toEncodeObject()));
         if (this.log) console.log("Send header response");
 
         await this.waitBodyRequest();
-        await this.sendBlockBodyResponse(
-            body.map(transactions =>
-                transactions.map(tx => tx.toEncodeObject())
-            )
-        );
+        await this.sendBlockBodyResponse(body.map(transactions => transactions.map(tx => tx.toEncodeObject())));
         if (this.log) console.log("Send body response");
     }
 
@@ -272,9 +216,7 @@ export class TestHelper {
 
     async sendTransaction(transactions: Array<SignedTransaction>) {
         if (this.log) console.log("Send transactions");
-        await this.sendTransactionSyncMessage(
-            transactions.map(tx => tx.toEncodeObject())
-        );
+        await this.sendTransactionSyncMessage(transactions.map(tx => tx.toEncodeObject()));
     }
 
     private async waitForBlockSyncMessage(type: MessageType): Promise<{}> {
@@ -328,9 +270,7 @@ export class TestHelper {
 
     async waitHeaderRequest() {
         try {
-            await this.waitForBlockSyncMessage(
-                MessageType.MESSAGE_ID_GET_HEADERS
-            );
+            await this.waitForBlockSyncMessage(MessageType.MESSAGE_ID_GET_HEADERS);
         } catch (error) {
             console.error(error);
         }
@@ -338,9 +278,7 @@ export class TestHelper {
 
     async waitBodyRequest() {
         try {
-            await this.waitForBlockSyncMessage(
-                MessageType.MESSAGE_ID_GET_BODIES
-            );
+            await this.waitForBlockSyncMessage(MessageType.MESSAGE_ID_GET_BODIES);
         } catch (error) {
             console.error(error);
         }
@@ -363,9 +301,7 @@ export class TestHelper {
     }
 
     soloGenesisBlockHeader(): Header {
-        const parentHash = new H256(
-            "0000000000000000000000000000000000000000000000000000000000000000"
-        );
+        const parentHash = new H256("0000000000000000000000000000000000000000000000000000000000000000");
         const timestamp = new U256(0);
         const number = new U256(0);
         const author = new H160("0000000000000000000000000000000000000000");
@@ -403,15 +339,9 @@ export class TestHelper {
             115,
             124
         ]);
-        const transactionsRoot = new H256(
-            "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
-        );
-        const stateRoot = new H256(
-            "09f943122bfbb85adda8209ba72514374f71826fd874e08855b64bc95498cb02"
-        );
-        const invoicesRoot = new H256(
-            "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
-        );
+        const transactionsRoot = new H256("45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0");
+        const stateRoot = new H256("09f943122bfbb85adda8209ba72514374f71826fd874e08855b64bc95498cb02");
+        const invoicesRoot = new H256("45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0");
         const score = new U256(131072);
         const seal: any[] = [];
         const header = new Header(
@@ -436,15 +366,9 @@ export class TestHelper {
         const number = new U256(1);
         const author = new H160("7777777777777777777777777777777777777777");
         const extraData = Buffer.alloc(0);
-        const transactionsRoot = new H256(
-            "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
-        );
-        const stateRoot = new H256(
-            "09f943122bfbb85adda8209ba72514374f71826fd874e08855b64bc95498cb02"
-        );
-        const invoicesRoot = new H256(
-            "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
-        );
+        const transactionsRoot = new H256("45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0");
+        const stateRoot = new H256("09f943122bfbb85adda8209ba72514374f71826fd874e08855b64bc95498cb02");
+        const invoicesRoot = new H256("45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0");
         const score = new U256(999999999999999);
         const seal: any[] = [];
         const header = new Header(
@@ -469,15 +393,9 @@ export class TestHelper {
         const number = new U256(2);
         const author = new H160("6666666666666666666666666666666666666666");
         const extraData = Buffer.alloc(0);
-        const transactionsRoot = new H256(
-            "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
-        );
-        const stateRoot = new H256(
-            "09f943122bfbb85adda8209ba72514374f71826fd874e08855b64bc95498cb02"
-        );
-        const invoicesRoot = new H256(
-            "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
-        );
+        const transactionsRoot = new H256("45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0");
+        const stateRoot = new H256("09f943122bfbb85adda8209ba72514374f71826fd874e08855b64bc95498cb02");
+        const invoicesRoot = new H256("45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0");
         const score = new U256(999999999999999);
         const seal: any[] = [];
         const header = new Header(

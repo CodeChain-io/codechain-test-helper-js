@@ -1,6 +1,5 @@
 import * as BlockSyncMessage from "../blockSyncMessage";
 import { U256 } from "codechain-primitives";
-
 import "jest";
 
 describe("Check BlockSyncMessage RLP encoding", () => {

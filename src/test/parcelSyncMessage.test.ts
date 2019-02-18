@@ -1,5 +1,4 @@
 import * as ParcelSyncMessage from "../transactionSyncMessage";
-
 import "jest";
 
 describe("Check TransactionSyncMessage RLP encoding", () => {

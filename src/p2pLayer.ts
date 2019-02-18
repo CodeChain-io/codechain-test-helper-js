@@ -1,4 +1,4 @@
-// Copyright 2018 Kodebox, Inc.
+// Copyright 2018-2019 Kodebox, Inc.
 // This file is part of CodeChain.
 //
 // This program is free software: you can redistribute it and/or modify
@@ -13,64 +13,54 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
-import { Session } from "./session";
-import {
-    MessageType,
-    SignedMessage,
-    HandshakeMessage,
-    NegotiationMessage,
-    ExtensionMessage
-} from "./p2pMessage";
+import { H256, H512, U128, U256 } from "codechain-primitives";
+import { createDecipheriv } from "crypto";
+import { ec } from "elliptic";
+import { Socket } from "net";
 import { BlockSyncMessage } from "./blockSyncMessage";
+import { MessageType, SignedMessage, Sync1, NegotiationRequest, Unencrypted, Ack, fromBytes } from "./message";
 import { TransactionSyncMessage } from "./transactionSyncMessage";
-import { H256 } from "codechain-primitives";
-import { U256 } from "codechain-primitives";
 
-const NET = require("net");
+const EC = new ec("secp256k1");
 
 export class P2pLayer {
-    private ip: string;
-    private port: number;
-    private session: Session;
-    private socket: any;
-    private allowedFinish: boolean;
-    private arrivedExtensionMessage: Array<
-        BlockSyncMessage | TransactionSyncMessage
-    >;
+    private readonly ip: string;
+    private readonly port: number;
+    private readonly socket: Socket;
+    private readonly arrivedExtensionMessage: (BlockSyncMessage | TransactionSyncMessage)[];
     private tcpBuffer: Buffer;
     private genesisHash: H256;
     private recentHeaderNonce: U256;
     private recentBodyNonce: U256;
     private log: boolean;
+    private readonly networkId: string;
+    private readonly localKey: ec.KeyPair;
+    private sharedSecret?: string;
+    private nonce?: U128;
 
-    constructor(ip: string, port: number) {
-        this.session = new Session(ip, port);
-        this.socket = new NET.Socket();
+    constructor(ip: string, port: number, networkId: string) {
+        this.socket = new Socket();
         this.ip = ip;
         this.port = port;
-        this.allowedFinish = false;
         this.arrivedExtensionMessage = [];
         this.tcpBuffer = Buffer.alloc(0);
-        this.genesisHash = new H256(
-            "0000000000000000000000000000000000000000000000000000000000000000"
-        );
+        this.genesisHash = new H256("0000000000000000000000000000000000000000000000000000000000000000");
         this.recentHeaderNonce = new U256(0);
         this.recentBodyNonce = new U256(0);
         this.log = false;
+        this.networkId = networkId;
+        this.localKey = EC.genKeyPair();
     }
 
-    setLog() {
+    enableLog() {
         this.log = true;
-        this.session.setLog();
     }
 
     getGenesisHash(): H256 {
         return this.genesisHash;
     }
 
-    getArrivedExtensionMessage(): Array<
-        BlockSyncMessage | TransactionSyncMessage
-    > {
+    getArrivedExtensionMessage(): (BlockSyncMessage | TransactionSyncMessage)[] {
         return this.arrivedExtensionMessage;
     }
 
@@ -83,29 +73,14 @@ export class P2pLayer {
     }
 
     async connect(): Promise<{}> {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.session.connect();
-            } catch (err) {
-                console.error(err);
-                reject(err);
-            }
-
+        return new Promise(async resolve => {
             this.socket.connect({ port: this.port, host: this.ip }, () => {
-                if (this.log) console.log("Start TCP connection");
-                if (this.log)
-                    console.log(
-                        "   local = %s:%s",
-                        this.socket.localAddress,
-                        this.socket.localPort
-                    );
-                if (this.log)
-                    console.log(
-                        "   remote = %s:%s",
-                        this.socket.remoteAddress,
-                        this.socket.remotePort
-                    );
-                this.sendP2pMessage(MessageType.SYNC_ID);
+                if (this.log) {
+                    console.log("Start TCP connection");
+                    console.log("   local = %s:%s", this.socket.localAddress, this.socket.localPort);
+                    console.log("   remote = %s:%s", this.socket.remoteAddress, this.socket.remotePort);
+                }
+                this.sendP2pMessage(MessageType.SYNC1_ID);
 
                 this.socket.on("data", (data: Buffer) => {
                     try {
@@ -114,45 +89,35 @@ export class P2pLayer {
                             const len = this.tcpBuffer.readUIntBE(0, 1);
                             if (len >= 0xf8) {
                                 const lenOfLen = len - 0xf7;
-                                const dataLen = this.tcpBuffer
-                                    .slice(1, 1 + lenOfLen)
-                                    .readUIntBE(0, lenOfLen);
-                                if (
-                                    this.tcpBuffer.length >=
-                                    dataLen + lenOfLen + 1
-                                ) {
-                                    const rlpPacket = this.tcpBuffer.slice(
-                                        0,
-                                        dataLen + lenOfLen + 1
-                                    );
+                                const dataLen = this.tcpBuffer.slice(1, 1 + lenOfLen).readUIntBE(0, lenOfLen);
+                                if (this.tcpBuffer.length >= dataLen + lenOfLen + 1) {
+                                    const rlpPacket = this.tcpBuffer.slice(0, dataLen + lenOfLen + 1);
                                     this.tcpBuffer = this.tcpBuffer.slice(
                                         dataLen + lenOfLen + 1,
                                         this.tcpBuffer.length
                                     );
-                                    if (this.onP2pMessage(rlpPacket) === true)
-                                        resolve();
+                                    if (this.nonce == null) {
+                                        this.onHandshakeMessage(rlpPacket);
+                                    } else {
+                                        this.onSignedMessage(rlpPacket);
+                                    }
+                                    resolve();
                                 } else {
-                                    throw Error(
-                                        "The rlp data has not arrived yet"
-                                    );
+                                    throw Error("The rlp data has not arrived yet");
                                 }
                             } else if (len >= 0xc0) {
                                 const dataLen = len - 0xc0;
                                 if (this.tcpBuffer.length >= dataLen + 1) {
-                                    const rlpPacket = this.tcpBuffer.slice(
-                                        0,
-                                        dataLen + 1
-                                    );
-                                    this.tcpBuffer = this.tcpBuffer.slice(
-                                        dataLen + 1,
-                                        this.tcpBuffer.length
-                                    );
-                                    if (this.onP2pMessage(rlpPacket) === true)
-                                        resolve();
+                                    const rlpPacket = this.tcpBuffer.slice(0, dataLen + 1);
+                                    this.tcpBuffer = this.tcpBuffer.slice(dataLen + 1, this.tcpBuffer.length);
+                                    if (this.nonce == null) {
+                                        this.onHandshakeMessage(rlpPacket);
+                                    } else {
+                                        this.onSignedMessage(rlpPacket);
+                                    }
+                                    resolve();
                                 } else {
-                                    throw Error(
-                                        "The rlp data has not arrived yet"
-                                    );
+                                    throw Error("The rlp data has not arrived yet");
                                 }
                             } else {
                                 throw Error("Invalid RLP data");
@@ -163,194 +128,196 @@ export class P2pLayer {
                     }
                 });
                 this.socket.on("end", () => {
-                    if (this.log) console.log("TCP disconnected");
+                    if (this.log) {
+                        console.log("TCP disconnected");
+                    }
                 });
                 this.socket.on("error", (err: any) => {
-                    if (this.log)
+                    if (this.log) {
                         console.log("Socket Error: ", JSON.stringify(err));
+                    }
                 });
                 this.socket.on("close", () => {
-                    if (this.log) console.log("Socket Closed");
+                    if (this.log) {
+                        console.log("Socket Closed");
+                    }
                 });
             });
         });
     }
 
-    private sendP2pMessage(messageType: MessageType): void {
+    private async sendP2pMessage(messageType: MessageType): Promise<void> {
         switch (messageType) {
-            case MessageType.SYNC_ID: {
-                if (this.log) console.log("Send SYNC_ID Message");
-                const msg = new HandshakeMessage({
-                    type: "sync",
-                    version: new U256(0),
-                    port: this.session.getPort()
-                });
-                const signedMsg = new SignedMessage(
-                    msg,
-                    this.session.getTargetNonce()
-                );
-                this.writeData(signedMsg.rlpBytes());
+            case MessageType.SYNC1_ID: {
+                if (this.log) {
+                    console.log("Send SYNC_ID Message");
+                }
+                const { localKey, port, networkId } = this;
+                const localPubKey = localKey
+                    .getPublic()
+                    .encode("hex")
+                    .slice(2, 130);
+                const msg = new Sync1(new H512(localPubKey), networkId, port);
+                await this.writeData(msg.rlpBytes());
                 break;
             }
             case MessageType.REQUEST_ID: {
                 if (this.log) console.log("Send REQUEST_ID Message");
-                const extensionName = [
-                    "block-propagation",
-                    "transaction-propagation"
-                ];
-                let msg = new NegotiationMessage(new U256(0), new U256(0), {
-                    type: "request",
-                    extensionName: extensionName[0],
-                    extensionVersion: [new U256(0)]
-                });
-                let signedMsg = new SignedMessage(
-                    msg,
-                    this.session.getTargetNonce()
-                );
-                this.writeData(signedMsg.rlpBytes());
-
-                msg = new NegotiationMessage(new U256(0), new U256(1), {
-                    type: "request",
-                    extensionName: extensionName[1],
-                    extensionVersion: [new U256(0)]
-                });
-                signedMsg = new SignedMessage(
-                    msg,
-                    this.session.getTargetNonce()
-                );
-                this.writeData(signedMsg.rlpBytes());
+                const extensionName = ["block-propagation", "transaction-propagation"];
+                const messages = extensionName.map(extensionName => new NegotiationRequest(extensionName, [0]));
+                const signedMessages = messages.map(msg => new SignedMessage(msg, this.nonce!));
+                const sends = signedMessages.map(msg => this.writeData(msg.rlpBytes()));
+                await Promise.all(sends);
                 break;
             }
             default:
-                throw Error("Unimplemented");
+                throw Error(`Sending ${MessageType[messageType]} is not implemented`);
         }
     }
 
-    async sendExtensionMessage(
-        extensionName: string,
-        extensionVersion: U256,
-        data: Buffer,
-        needEncryption: boolean
-    ) {
-        const secret = this.session.getSecret();
-        if (secret == null) throw Error("Secret is not specified");
+    async sendExtensionMessage(extensionName: string, data: Buffer, needEncryption: boolean) {
         let msg;
-        if (needEncryption) {
-            msg = new ExtensionMessage(
-                new U256(0),
-                extensionName,
-                extensionVersion,
-                { type: "encrypted", data },
-                secret,
-                this.session.getTargetNonce()
-            );
-        } else {
-            msg = new ExtensionMessage(
-                new U256(0),
-                extensionName,
-                extensionVersion,
-                { type: "unencrypted", data },
-                secret,
-                this.session.getTargetNonce()
-            );
+        if (this.nonce == null) {
+            throw Error("Nonce is not set yet");
         }
-        const signedMsg = new SignedMessage(msg, this.session.getTargetNonce());
+        if (needEncryption) {
+            throw Error("Not implemented");
+        } else {
+            msg = new Unencrypted(extensionName, data);
+        }
+        const signedMsg = new SignedMessage(msg, this.nonce);
         await this.writeData(signedMsg.rlpBytes());
     }
 
     private async writeData(data: Buffer) {
         const success = await !this.socket.write(data);
         if (!success) {
-            (async data => {
-                await this.socket.once("drain", () => {
-                    this.writeData(data);
-                });
-            })(data);
+            await this.socket.once("drain", () => this.writeData(data));
         }
     }
 
-    onP2pMessage(data: any): boolean {
-        const secret = this.session.getSecret();
-        const nonce = this.session.getNonce();
-        if (secret == null) throw Error("Secret is not specified");
-        if (nonce == null) throw Error("Nonce is not specified");
+    onHandshakeMessage(data: Buffer) {
         try {
-            const msg = SignedMessage.fromBytes(data, secret, nonce);
+            const msg = fromBytes(data);
 
             switch (msg.protocolId()) {
-                case MessageType.SYNC_ID: {
-                    if (this.log) console.log("Got SYNC_ID message");
+                case MessageType.SYNC1_ID: {
+                    if (this.log) {
+                        console.log("Got SYNC_ID message");
+                    }
+                    throw Error("Sync1 message is not implemented");
+                    break;
+                }
+                case MessageType.SYNC2_ID: {
+                    if (this.log) {
+                        console.log("Got SYNC_ID message");
+                    }
+                    throw Error("Sync2 message is not implemented");
                     break;
                 }
                 case MessageType.ACK_ID: {
-                    if (this.log) console.log("Got ACK_ID message");
+                    if (this.log) {
+                        console.log("Got ACK_ID message");
+                    }
+                    const ack = msg as Ack;
+                    const recipientPubKey = EC.keyFromPublic(
+                        "04".concat(ack.recipientPubKey.toEncodeObject().slice(2)),
+                        "hex"
+                    ).getPublic();
+                    this.sharedSecret = this.localKey
+                        .derive(recipientPubKey)
+                        .toString(16)
+                        .padStart(64, "0");
+
+                    const ALGORITHM = "AES-256-CBC";
+                    const key = Buffer.from(new H256(this.sharedSecret!).toEncodeObject().slice(2), "hex");
+                    const ivd = Buffer.from("00000000000000000000000000000000", "hex");
+                    const decryptor = createDecipheriv(ALGORITHM, key, ivd);
+                    decryptor.write(ack.encryptedNonce);
+                    decryptor.end();
+                    this.nonce = new U128(`0x${decryptor.read().toString("hex")}`);
+
                     this.sendP2pMessage(MessageType.REQUEST_ID);
                     break;
                 }
-                case MessageType.REQUEST_ID: {
-                    if (this.log) console.log("Got REQUEST_ID message");
-                    break;
-                }
-                case MessageType.ALLOWED_ID: {
-                    if (this.log) console.log("Got ALLOWED_ID message");
-                    if (this.allowedFinish) return true;
-                    this.allowedFinish = true;
-                    break;
-                }
-                case MessageType.DENIED_ID: {
-                    if (this.log) console.log("Got DENIED_ID message");
-                    break;
-                }
-                case MessageType.ENCRYPTED_ID: {
-                    if (this.log) console.log("Got ENCRYPTED_ID message");
-                    this.onExtensionMessage(msg as ExtensionMessage);
-                    break;
-                }
-                case MessageType.UNENCRYPTED_ID: {
-                    if (this.log) console.log("Got UNENCRYPTED_ID message");
-                    this.onExtensionMessage(msg as ExtensionMessage);
-                    break;
-                }
                 default:
-                    throw Error("Unreachable");
+                    throw Error(`${MessageType[msg.protocolId()]} is not one of the handshake message`);
             }
         } catch (err) {
             console.error(err);
         }
-
-        return false;
     }
 
-    onExtensionMessage(msg: ExtensionMessage) {
-        switch (msg.getName()) {
+    onSignedMessage(data: any) {
+        if (this.nonce == null) {
+            throw Error("Nonce is not specified");
+        }
+        const msg = SignedMessage.fromBytes(data, this.nonce);
+
+        switch (msg.protocolId()) {
+            case MessageType.REQUEST_ID: {
+                if (this.log) {
+                    console.log("Got REQUEST_ID message");
+                }
+                throw Error("Request message is not implemented");
+                break;
+            }
+            case MessageType.RESPONSE_ID: {
+                if (this.log) {
+                    console.log("Got REQUEST_ID message");
+                }
+                break;
+            }
+            case MessageType.ENCRYPTED_ID: {
+                if (this.log) {
+                    console.log("Got ENCRYPTED_ID message");
+                }
+                throw Error("Encrypted message is not implemented");
+            }
+            case MessageType.UNENCRYPTED_ID: {
+                if (this.log) {
+                    console.log("Got UNENCRYPTED_ID message");
+                }
+                const unencrypted = msg.message as Unencrypted;
+                this.onExtensionMessage(unencrypted.extensionName, unencrypted.data);
+                break;
+            }
+            default:
+                throw Error(`${msg.protocolId()} is not a valid protocol id for signed messaged`);
+        }
+    }
+
+    onExtensionMessage(extensionName: string, msg: Buffer) {
+        switch (extensionName) {
             case "block-propagation": {
-                const extensionMsg = BlockSyncMessage.fromBytes(
-                    msg.getData().data
-                );
+                const extensionMsg = BlockSyncMessage.fromBytes(msg);
                 this.arrivedExtensionMessage.push(extensionMsg);
                 const body = extensionMsg.getBody();
                 if (body.type === "status") {
                     this.genesisHash = body.genesisHash;
                 } else if (body.type === "request") {
                     const msg = body.message.getBody();
-                    if (msg.type === "headers")
-                        this.recentHeaderNonce = body.id;
+                    if (msg.type === "headers") this.recentHeaderNonce = body.id;
                     else if (msg.type === "bodies") {
                         this.recentBodyNonce = body.id;
-                        if (this.log) console.log(msg.data);
+                        if (this.log) {
+                            console.log(msg.data);
+                        }
                     }
                 }
-                if (this.log) console.log(extensionMsg);
-                if (this.log) console.log(extensionMsg.getBody());
+                if (this.log) {
+                    console.log(extensionMsg);
+                    console.log(extensionMsg.getBody());
+                }
 
                 break;
             }
             case "transaction-propagation": {
-                const extensionMsg = TransactionSyncMessage.fromBytes(
-                    msg.getData().data
-                );
+                const extensionMsg = TransactionSyncMessage.fromBytes(msg);
                 this.arrivedExtensionMessage.push(extensionMsg);
-                if (this.log) console.log(extensionMsg);
+                if (this.log) {
+                    console.log(extensionMsg);
+                }
                 break;
             }
             default:

@@ -13,6 +13,7 @@
             true,
             "LF"
         ],
+        "max-line-length": [true, 120],
         "object-literal-shorthand": true,
         "one-line": [
             true,

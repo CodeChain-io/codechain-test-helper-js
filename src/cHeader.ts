@@ -19,9 +19,7 @@ import { U256 } from "codechain-primitives";
 import { blake256 } from "codechain-sdk/lib/utils";
 
 const RLP = require("rlp");
-const BLAKE_NULL_RLP: H256 = new H256(
-    "45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0"
-);
+const BLAKE_NULL_RLP: H256 = new H256("45b0cfc220ceec5b7c1c62c4d4193d38e4eba48e8815729ce75f9c0ab0e4c1c0");
 
 export class Header {
     private parentHash: H256;
@@ -33,7 +31,7 @@ export class Header {
     private stateRoot: H256;
     private invoiceRoot: H256;
     private score: U256;
-    private seal: Array<Buffer>;
+    private seal: number[][];
     private hash: null | H256;
     private bareHash: null | H256;
 
@@ -47,7 +45,7 @@ export class Header {
         stateRoot: H256,
         invoiceRoot: H256,
         score: U256,
-        seal: Array<Buffer>,
+        seal: number[][],
         hash?: H256,
         bareHash?: H256
     ) {
@@ -101,7 +99,7 @@ export class Header {
         this.score = score;
     }
 
-    setSeal(seal: Array<Buffer>) {
+    setSeal(seal: number[][]) {
         this.seal = seal;
     }
 
@@ -119,9 +117,7 @@ export class Header {
 
     default(): Header {
         return new Header(
-            new H256(
-                "0000000000000000000000000000000000000000000000000000000000000000"
-            ),
+            new H256("0000000000000000000000000000000000000000000000000000000000000000"),
             new U256(0),
             new U256(0),
             new H160("0000000000000000000000000000000000000000"),
@@ -129,9 +125,7 @@ export class Header {
             BLAKE_NULL_RLP,
             BLAKE_NULL_RLP,
             BLAKE_NULL_RLP,
-            new U256(
-                "0000000000000000000000000000000000000000000000000000000000000000"
-            ),
+            new U256("0000000000000000000000000000000000000000000000000000000000000000"),
             []
         );
     }
@@ -147,7 +141,7 @@ export class Header {
             this.number.toEncodeObject(),
             this.timestamp.toEncodeObject(),
             this.extraData
-        ].concat(this.seal);
+        ].concat(this.seal.map(seal => Buffer.of(...seal)));
     }
 
     rlpBytes(): Buffer {

@@ -7,15 +7,16 @@
   "scripts": {
     "build": "tsc -p .",
     "test": "jest -i",
-    "lint": "tslint -p . && prettier 'src/**/*.{ts,js,json}' -l",
-    "fmt": "tslint -p . --fix && prettier 'src/**/*.{ts,js,json}' --write"
+    "lint": "tslint -p . && prettier 'src/**/*.{ts,js,json}' --print-width 120 -l",
+    "fmt": "tslint -p . --fix && prettier 'src/**/*.{ts,js,json}' --print-width 120 --write"
   },
   "author": "CodeChain Team <codechain@kodebox.io>",
   "dependencies": {
     "@types/crypto-js": "^3.1.43",
+    "@types/elliptic": "^6.4.4",
     "blakejs": "^1.1.0",
-    "codechain-primitives": "^0.4.5",
-    "codechain-sdk": "https://github.com/sgkim126/codechain-sdk-js.git#refac-lib",
+    "codechain-primitives": "^0.4.6",
+    "codechain-sdk": "https://github.com/sgkim126/codechain-sdk-js.git#rpc-lib",
     "crypto": "^1.0.1",
     "dgram": "^1.0.1",
     "elliptic": "^6.4.1",

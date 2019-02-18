@@ -1,7 +1,7 @@
 import { TestHelper } from "../testHelper";
 
 async function sendBlock() {
-    const TH = new TestHelper("0.0.0.0", 3485);
+    const TH = new TestHelper("0.0.0.0", 3485, "tc");
     TH.setLog();
     await TH.establish();
     // Genesis block
@@ -14,11 +14,7 @@ async function sendBlock() {
     const header2 = TH.soloBlock2(header1.hashing());
 
     await TH.sendEncodedBlock(
-        [
-            header.toEncodeObject(),
-            header1.toEncodeObject(),
-            header2.toEncodeObject()
-        ],
+        [header.toEncodeObject(), header1.toEncodeObject(), header2.toEncodeObject()],
         [[], []],
         header2.hashing(),
         header2.getScore()

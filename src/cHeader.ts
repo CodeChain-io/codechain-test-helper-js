@@ -29,7 +29,7 @@ export class Header {
     private extraData: Buffer;
     private transactionsRoot: H256;
     private stateRoot: H256;
-    private invoiceRoot: H256;
+    private resultsRoot: H256;
     private score: U256;
     private seal: number[][];
     private hash: null | H256;
@@ -43,7 +43,7 @@ export class Header {
         extraData: Buffer,
         transactionsRoot: H256,
         stateRoot: H256,
-        invoiceRoot: H256,
+        resultsRoot: H256,
         score: U256,
         seal: number[][],
         hash?: H256,
@@ -56,7 +56,7 @@ export class Header {
         this.extraData = extraData;
         this.transactionsRoot = transactionsRoot;
         this.stateRoot = stateRoot;
-        this.invoiceRoot = invoiceRoot;
+        this.resultsRoot = resultsRoot;
         this.score = score;
         this.seal = seal;
         this.hash = hash == undefined ? this.hashing() : hash;
@@ -91,8 +91,8 @@ export class Header {
         this.stateRoot = root;
     }
 
-    setInvoiceRoot(root: H256) {
-        this.invoiceRoot = root;
+    setResultsRoot(root: H256) {
+        this.resultsRoot = root;
     }
 
     setScore(score: U256) {
@@ -136,7 +136,7 @@ export class Header {
             this.author.toEncodeObject(),
             this.stateRoot.toEncodeObject(),
             this.transactionsRoot.toEncodeObject(),
-            this.invoiceRoot.toEncodeObject(),
+            this.resultsRoot.toEncodeObject(),
             this.score.toEncodeObject(),
             this.number.toEncodeObject(),
             this.timestamp.toEncodeObject(),
@@ -157,7 +157,7 @@ export class Header {
         const extraData = decodedmsg[8];
         const transactionsRoot = new H256(decodedmsg[3].toString("hex"));
         const stateRoot = new H256(decodedmsg[2].toString("hex"));
-        const invoiceRoot = new H256(decodedmsg[4].toString("hex"));
+        const resultsRoot = new H256(decodedmsg[4].toString("hex"));
         const score = decodedmsg[5];
 
         const header = new Header(
@@ -168,7 +168,7 @@ export class Header {
             extraData,
             transactionsRoot,
             stateRoot,
-            invoiceRoot,
+            resultsRoot,
             score,
             []
         );

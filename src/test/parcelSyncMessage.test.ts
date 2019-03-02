@@ -1,12 +1,13 @@
 import * as ParcelSyncMessage from "../transactionSyncMessage";
-import "jest";
+import { expect } from "chai";
+import "mocha";
 
-describe("Check TransactionSyncMessage RLP encoding", () => {
-    test("TransactionSyncMessage RLP encoding test", () => {
+describe("Check TransactionSyncMessage RLP encoding", function() {
+    it("TransactionSyncMessage RLP encoding test", function() {
         const msg = new ParcelSyncMessage.TransactionSyncMessage({
             type: "transactions",
             data: []
         });
-        expect([...msg.rlpBytes()]).toEqual([192]);
-    }, 10000);
+        expect([...msg.rlpBytes()]).deep.equal([192]);
+    });
 });

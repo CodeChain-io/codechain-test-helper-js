@@ -1,9 +1,10 @@
 import * as Message from "../message";
+import { expect } from "chai";
 import { U128, H512 } from "codechain-primitives";
-import "jest";
+import "mocha";
 
-describe("Check P2P Message RLP encoding", () => {
-    test("Sync1 RLP encoding test", () => {
+describe("Check P2P Message RLP encoding", function() {
+    it("Sync1 RLP encoding test", function() {
         const msg = new Message.Sync1(
             new H512(
                 "1234567890abcdef" +
@@ -18,7 +19,7 @@ describe("Check P2P Message RLP encoding", () => {
             "ab",
             3048
         );
-        expect([...msg.rlpBytes()]).toEqual([
+        expect([...msg.rlpBytes()]).deep.equal([
             248,
             73,
             1,
@@ -95,9 +96,9 @@ describe("Check P2P Message RLP encoding", () => {
             11,
             232
         ]);
-    }, 10000);
+    });
 
-    test("Sync2 RLP encoding test", () => {
+    it("Sync2 RLP encoding test", function() {
         const msg = new Message.Sync2(
             new H512(
                 "1234567890abcdef" +
@@ -122,7 +123,7 @@ describe("Check P2P Message RLP encoding", () => {
             "ab",
             3048
         );
-        expect([...msg.rlpBytes()]).toEqual([
+        expect([...msg.rlpBytes()]).deep.equal([
             248,
             139,
             2,
@@ -265,9 +266,9 @@ describe("Check P2P Message RLP encoding", () => {
             11,
             232
         ]);
-    }, 10000);
+    });
 
-    test("Ack RLP encoding test", () => {
+    it("Ack RLP encoding test", function() {
         const msg = new Message.Ack(
             new H512(
                 "1234567890abcdef" +
@@ -281,7 +282,7 @@ describe("Check P2P Message RLP encoding", () => {
             ),
             Buffer.of(0xd, 0xe, 0xa, 0xd, 0xb, 0xe, 0xe, 0xf)
         );
-        expect([...msg.rlpBytes()]).toEqual([
+        expect([...msg.rlpBytes()]).deep.equal([
             248,
             76,
             3,
@@ -363,14 +364,14 @@ describe("Check P2P Message RLP encoding", () => {
         ]);
     });
 
-    test("Nack RLP encoding test", () => {
+    it("Nack RLP encoding test", function() {
         const msg = new Message.Nack();
-        expect([...msg.rlpBytes()]).toEqual([193, 4]);
+        expect([...msg.rlpBytes()]).deep.equal([193, 4]);
     });
 
-    test("RequestMessage RLP encoding test", () => {
+    it("RequestMessage RLP encoding test", function() {
         const msg = new Message.NegotiationRequest("extension name", [1, 2, 3, 4]);
-        expect([...msg.rlpBytes()]).toEqual([
+        expect([...msg.rlpBytes()]).deep.equal([
             213,
             5,
             142,
@@ -396,9 +397,9 @@ describe("Check P2P Message RLP encoding", () => {
         ]);
     });
 
-    test("ResponseMessage RLP encoding test", () => {
+    it("ResponseMessage RLP encoding test", function() {
         const msg = new Message.NegotiationResponse("extension name", 0);
-        expect([...msg.rlpBytes()]).toEqual([
+        expect([...msg.rlpBytes()]).deep.equal([
             209,
             6,
             142,
@@ -420,11 +421,11 @@ describe("Check P2P Message RLP encoding", () => {
         ]);
     });
 
-    test("EncryptedMessage RLP encoding test", () => {
+    it("EncryptedMessage RLP encoding test", function() {
         const extensionName = "encrypt";
         const data = "this data must be encrypted";
         const msg = new Message.Encrypted(extensionName, Buffer.from(data));
-        expect([...msg.rlpBytes()]).toEqual([
+        expect([...msg.rlpBytes()]).deep.equal([
             229,
             7,
             135,
@@ -466,11 +467,11 @@ describe("Check P2P Message RLP encoding", () => {
         ]);
     });
 
-    test("UnencryptedMessage RLP encoding test", () => {
+    it("UnencryptedMessage RLP encoding test", function() {
         const extensionName = "unencrypt";
         const data = "this data must be encrypted";
         const msg = new Message.Unencrypted(extensionName, Buffer.from(data));
-        expect([...msg.rlpBytes()]).toEqual([
+        expect([...msg.rlpBytes()]).deep.equal([
             231,
             8,
             137,
@@ -514,7 +515,7 @@ describe("Check P2P Message RLP encoding", () => {
         ]);
     });
 
-    test("SignedMessage RLP encoding test", () => {
+    it("SignedMessage RLP encoding test", function() {
         const msg = new Message.Ack(
             new H512(
                 "deadbeefcafe" +
@@ -532,7 +533,7 @@ describe("Check P2P Message RLP encoding", () => {
             Buffer.of(0xd, 0xe, 0xa, 0xd, 0xb, 0xe, 0xe, 0xf)
         );
         const signed = new Message.SignedMessage(msg, new U128("0x00000000000000000000000000000000"));
-        expect([...signed.rlpBytes()]).toEqual([
+        expect([...signed.rlpBytes()]).deep.equal([
             248,
             113,
             184,

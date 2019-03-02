@@ -1,10 +1,10 @@
-import * as ParcelSyncMessage from "../transactionSyncMessage";
+import * as TxSyncMessage from "../transactionSyncMessage";
 import { expect } from "chai";
 import "mocha";
 
 describe("Check TransactionSyncMessage RLP encoding", function() {
     it("TransactionSyncMessage RLP encoding test", function() {
-        const msg = new ParcelSyncMessage.TransactionSyncMessage({
+        const msg = new TxSyncMessage.TransactionSyncMessage({
             type: "transactions",
             data: []
         });
